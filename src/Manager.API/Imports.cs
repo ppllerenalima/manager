@@ -1,0 +1,9 @@
+﻿global using Manager.API.Extensions;
+global using Manager.API.Middleware;
+global using Manager.Domain.Extensions;
+global using Manager.Domain.Repositories;
+global using Manager.Infrastructure;
+global using Manager.Infrastructure.Extensions;
+global using Manager.Infrastructure.Repositories;
+global using Microsoft.AspNetCore.Mvc;
+global using System.Text.Json.Serialization;
