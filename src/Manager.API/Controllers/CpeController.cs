@@ -1,7 +1,6 @@
 ﻿using Manager.Domain.Requests.Cpe;
 using Manager.Domain.Responses.CpeResponses;
 using Manager.Domain.Services;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Manager.API.Controllers
 {
@@ -10,10 +9,12 @@ namespace Manager.API.Controllers
     public class CpeController : ControllerBase
     {
         private readonly ICpeService _cpeService;
+        private readonly ITokenService _tokenService;
 
-        public CpeController(ICpeService cpeService)
+        public CpeController(ICpeService cpeService, ITokenService tokenService)
         {
             _cpeService = cpeService;
+            _tokenService = tokenService;
         }
 
         [HttpPost("status-cdr")]
@@ -34,22 +35,31 @@ namespace Manager.API.Controllers
         }
 
         [HttpPost("consultacpe-comprobante")]
-        public async Task<IActionResult> ConsultaCpeComprobante([FromBody] ConsultaCpeComprobanteRequest request)
+        public async Task<IActionResult> ConsultaCpeComprobante([FromBody] ConsultaCpeRequest request)
         {
-            // El token lo recuperas desde el contexto si lo necesitas
-            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            // 1. Obtener token válido
+            var token = await _tokenService.GetOrGenerateActiveTokenAsync(request.clienteId);
 
-            var result = await _cpeService.ConsultaCpeComprobanteAsync(token, request);
+            var result = await _cpeService.ConsultaCpeComprobanteAsync(token.AccessToken, new ConsultaCpeComprobanteRequest
+            {
+                RucEmisor = request.RucEmisor,
+                TipoComprobante = request.TipoComprobante,
+                Serie = request.Serie,
+                Numero = request.Numero,
+                Tipo = request.Tipo
+            });
+
             return Ok(result);
         }
 
         [HttpPost("consultacpe-unificado")]
         public async Task<IActionResult> ConsultaCpeUnificado([FromBody] ConsultaCpeRequest request)
         {
-            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            // 1. Obtener token válido
+            var token = await _tokenService.GetOrGenerateActiveTokenAsync(request.clienteId);
 
             // 1️⃣ Primer intento: ControlCpeConsultaXml
-            var respXml = await _cpeService.ControlCpeConsultaXmlAsync(token, new ConsultaCpeComprobanteRequest
+            var respXml = await _cpeService.ControlCpeConsultaXmlAsync(token.AccessToken, new ConsultaCpeComprobanteRequest
             {
                 RucEmisor = request.RucEmisor,
                 TipoComprobante = request.TipoComprobante,
@@ -69,7 +79,7 @@ namespace Manager.API.Controllers
             }
 
             // 2️⃣ Segundo intento: ConsultaCpeComprobante
-            var respComprobante = await _cpeService.ConsultaCpeComprobanteAsync(token, new ConsultaCpeComprobanteRequest
+            var respComprobante = await _cpeService.ConsultaCpeComprobanteAsync(token.AccessToken, new ConsultaCpeComprobanteRequest
             {
                 RucEmisor = request.RucEmisor,
                 TipoComprobante = request.TipoComprobante,
@@ -80,15 +90,12 @@ namespace Manager.API.Controllers
 
             if (respComprobante.EsExito)
             {
-                // Convertir ValArchivo (Base64) a byte[]
-                var archivoBytes = Convert.FromBase64String(respComprobante.ValArchivo ?? "");
-
                 return Ok(new ConsultaCpeUnificadoResponse
                 {
                     EsExito = true,
                     StatusCode = respComprobante.StatusCode,
-                    Archivo = archivoBytes,
-                    NombreArchivo = respComprobante.NomArchivo
+                    Archivo = respComprobante.Archivo,
+                    NombreArchivo = respComprobante.NombreArchivo
                 });
             }
 
@@ -98,15 +105,15 @@ namespace Manager.API.Controllers
             if (respXml.Errores != null)
                 errores.AddRange(respXml.Errores.Select(e => new ErrorConsultaCpeResponse
                 {
-                    Status = e.status,
-                    Message = e.message
+                    status = e.status,
+                    message = e.message
                 }));
 
             if (respComprobante.Errores != null)
                 errores.AddRange(respComprobante.Errores.Select(e => new ErrorConsultaCpeResponse
                 {
-                    Status = e.status,
-                    Message = e.message
+                    status = e.status,
+                    message = e.message
                 }));
 
             return Ok(new ConsultaCpeUnificadoResponse

@@ -1,5 +1,3 @@
-using Manager.Domain.Responses;
-
 namespace Manager.Domain.Mappers
 {
     public class TicketMapper : ITicketMapper

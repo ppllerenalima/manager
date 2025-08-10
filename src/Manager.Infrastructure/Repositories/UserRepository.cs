@@ -13,8 +13,7 @@ namespace Manager.Infrastructure.Repositories
 
         public async Task<bool> AuthenticateAsync(string email, string password, CancellationToken cancellationToken)
         {
-            var result = await _signInManager.PasswordSignInAsync(
-                email, password, false, false);
+            var result = await _signInManager.PasswordSignInAsync(email, password, false, false);
             return result.Succeeded;
         }
 

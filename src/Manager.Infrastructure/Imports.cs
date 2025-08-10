@@ -1,5 +1,9 @@
 ﻿global using Manager.Domain.Entities;
 global using Manager.Domain.Repositories;
+global using Manager.Infrastructure.SchemaDefinitions;
 global using Microsoft.AspNetCore.Identity;
+global using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Microsoft.Extensions.DependencyInjection;
 global using System.Linq.Expressions;

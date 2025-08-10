@@ -283,7 +283,7 @@ namespace Manager.Infrastructure.ExternalServices.Sire
             return resultado;
         }
 
-        public async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteAsync(DescargarArchivoReporteRequest request)
+        public async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request)
         {
             var responseResult = new DescargarArchivoReporteResponse();
 
@@ -293,7 +293,7 @@ namespace Manager.Infrastructure.ExternalServices.Sire
                 {
                     client.BaseAddress = new Uri("https://api-sire.sunat.gob.pe/");
                     client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", request.Token);
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
                     var queryString = $"nomArchivoReporte={Uri.EscapeDataString(request.NomArchivoReporte)}" +
                                       $"&codTipoArchivoReporte={request.CodTipoArchivoReporte}" +
@@ -316,10 +316,10 @@ namespace Manager.Infrastructure.ExternalServices.Sire
                     else
                     {
                         var errorContent = await response.Content.ReadAsStringAsync();
-                        responseResult.Errores.Add(new ErrorDetail
+                        responseResult.Errores.Add(new Error_DescargarArchivoReporteResponse
                         {
-                            Cod = "SUNAT_ERROR",
-                            Msg = errorContent
+                            status = "SUNAT_ERROR",
+                            message = errorContent
                         });
                         responseResult.EsExito = false;
                     }
@@ -329,10 +329,10 @@ namespace Manager.Infrastructure.ExternalServices.Sire
             {
                 responseResult.EsExito = false;
                 responseResult.StatusCode = 500;
-                responseResult.Errores.Add(new ErrorDetail
+                responseResult.Errores.Add(new Error_DescargarArchivoReporteResponse
                 {
-                    Cod = "EX",
-                    Msg = ex.Message
+                    status = "EX",
+                    message = ex.Message
                 });
             }
 

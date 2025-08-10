@@ -5,6 +5,6 @@ namespace Manager.Domain.Services
         Task<TicketResponse> GetTicketAsync(GetTicketRequest request);
         Task<TicketResponse> AddTicketAsync(AddTicketRequest request);
         Task<TicketResponse> EditTicketAsync(EditTicketRequest request);
-        //Task<TicketResponse> DeleteTicketAsync(DeleteTicketRequest request);
+        Task<TicketResponse> GetOrGenerateActiveTicketAsync(string token, GetTicketRequest request, bool Error2244 = false);
     }
 }

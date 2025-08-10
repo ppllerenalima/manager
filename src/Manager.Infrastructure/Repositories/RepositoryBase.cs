@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace Manager.Infrastructure.Repositories
+﻿namespace Manager.Infrastructure.Repositories
 {
     public abstract class RepositoryBase<TEntity> : IRepositoryBase<TEntity> where TEntity : EntityBase
     {

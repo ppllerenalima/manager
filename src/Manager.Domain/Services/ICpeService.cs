@@ -6,7 +6,7 @@ namespace Manager.Domain.Services
     public interface ICpeService
     {
         Task<StatusResponse> StatusCdrAsync(ConsultarCpeRequest request);
-        Task<ControlCpeConsultaXmlResponse> ControlCpeConsultaXmlAsync(string token, ConsultaCpeComprobanteRequest request);
-        Task<ConsultaCpeComprobanteResponse> ConsultaCpeComprobanteAsync(string token, ConsultaCpeComprobanteRequest request);
+        Task<ConsultaCpeUnificadoResponse> ControlCpeConsultaXmlAsync(string token, ConsultaCpeComprobanteRequest request);
+        Task<ConsultaCpeUnificadoResponse> ConsultaCpeComprobanteAsync(string token, ConsultaCpeComprobanteRequest request);
     }
 }

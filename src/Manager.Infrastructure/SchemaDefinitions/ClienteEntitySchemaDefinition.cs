@@ -1,8 +1,4 @@
-using Manager.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
-namespace Manager.Infrastructure.SchemaDefinitions
+﻿namespace Manager.Infrastructure.SchemaDefinitions
 {
     public class ClienteEntitySchemaDefinition : IEntityTypeConfiguration<Cliente>
     {
@@ -12,10 +8,18 @@ namespace Manager.Infrastructure.SchemaDefinitions
 
             builder.HasKey(x => x.Id);
 
+            // Relación 1:1 Cliente → Token
             builder
                 .HasOne(c => c.Token)
                 .WithOne(t => t.Cliente)
                 .HasForeignKey<Token>(t => t.ClienteId);
+
+            // Relación 1:N Grupo → Clientes
+            builder
+                .HasOne(c => c.Grupo)
+                .WithMany(g => g.Clientes)
+                .HasForeignKey(c => c.GrupoId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

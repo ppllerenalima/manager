@@ -2,6 +2,7 @@
 {
     public class ConsultaCpeComprobanteRequest
     {
+
         public string RucEmisor { get; set; }
         public string TipoComprobante { get; set; }
         public string Serie { get; set; }

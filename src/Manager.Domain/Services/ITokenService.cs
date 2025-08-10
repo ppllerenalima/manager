@@ -9,5 +9,6 @@ namespace Manager.Domain.Services
         Task<TokenResponse> AddTokenAsync(AddTokenRequest request);
         Task<TokenResponse> EditTokenAsync(EditTokenRequest request);
         Task<TokenResponse> DeleteTokenAsync(DeleteTokenRequest request);
+        Task<TokenResponse> GetOrGenerateActiveTokenAsync(Guid clienteId);
     }
 }

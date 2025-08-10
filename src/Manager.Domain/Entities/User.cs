@@ -2,6 +2,7 @@ namespace Manager.Domain.Entities
 {
     public class User : IdentityUser
     {
-        public string Name { get; set; }
+        public Guid PersonaId { get; set; }
+        public Persona Persona { get; set; }
     }
 }

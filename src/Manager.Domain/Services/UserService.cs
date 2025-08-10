@@ -1,14 +1,3 @@
-using Manager.Domain.Repositories;
-using Manager.Domain.Requests.User;
-using Manager.Domain.Responses;
-using Manager.Domain.Responses.TokenResponses;
-using Manager.Domain.Settings;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-
 namespace Manager.Domain.Services
 {
     public class UserService : IUserService
@@ -25,20 +14,28 @@ namespace Manager.Domain.Services
         public async Task<UserResponse> GetUserAsync(GetUserRequest request, CancellationToken cancellationToken)
         {
             var response = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
-            return new UserResponse { Name = response.Name, Email = response.Email };
+            return new UserResponse
+            {
+                Email = response.Email
+            };
         }
 
         public async Task<UserResponse> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken)
         {
-            var user = new Entities.User { Email = request.Email, UserName = request.Email, Name = request.Name };
+            var user = new User
+            {
+                Email = request.Email,
+                UserName = request.Email,
+            };
+
             bool isCreated = await _userRepository.SignUpAsync(user, request.Password, cancellationToken);
 
-            return !isCreated ? null : new UserResponse { Name = request.Name, Email = request.Email };
+            return !isCreated ? null : new UserResponse { FirstName = request.FirstName, LastName = request.LastName, MiddleName = request.MiddleName, Email = request.Email };
         }
 
         public async Task<TokenResponse> SignInAsync(SignInRequest request, CancellationToken cancellationToken)
         {
-            bool isAuthenticated = await _userRepository.AuthenticateAsync(request.Email, request.Password, cancellationToken);
+            bool isAuthenticated = await _userRepository.AuthenticateAsync(request.UserName, request.Password, cancellationToken);
 
             return !isAuthenticated ? null : new TokenResponse { AccessToken = GenerateSecurityToken(request) };
         }
@@ -52,7 +49,7 @@ namespace Manager.Domain.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Email, request.Email)
+                    new Claim(ClaimTypes.Email, request.UserName)
                 }),
                 Expires = DateTime.UtcNow.AddDays(_authenticationSettings.ExpirationDays),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),

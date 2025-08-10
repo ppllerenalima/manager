@@ -9,6 +9,6 @@ namespace Manager.Domain.Services
         Task<AceptarPropuestaResultado> AceptarPropuestaAsync(AceptarPropuestaRequest requestModel);
         Task<DescargarPropuestaResponse> DescargarPropuestaRCEAsync(DescargarPropuestaRequest request);
         Task<ConsultarEstadoTicketResponse> ConsultarEstadoTicketAsync(ConsultarEstadoTicketRequest request);
-        Task<DescargarArchivoReporteResponse> DescargarArchivoReporteAsync(DescargarArchivoReporteRequest request);
+        Task<DescargarArchivoReporteResponse> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request);
     }
 }

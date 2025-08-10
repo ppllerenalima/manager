@@ -2,6 +2,8 @@
 {
     public class ConsultaCpeRequest
     {
+        public Guid clienteId { get; set; }
+
         public string RucEmisor { get; set; }
         public string TipoComprobante { get; set; }
         public string Serie { get; set; }

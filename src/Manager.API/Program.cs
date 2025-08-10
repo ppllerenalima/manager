@@ -1,5 +1,4 @@
-﻿using Manager.Domain.Services;
-using Manager.Infrastructure.ExternalServices.Cpe;
+﻿#region Configuración de Servicios
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,15 +14,19 @@ builder.Services
     .AddManagerContext(connectionString)
 
     // REPOSITORIOS
+    .AddScoped<IClienteRepository, ClienteRepository>()
+    .AddScoped<IGrupoRepository, GrupoRepository>()
     .AddScoped<ITicketRepository, TicketRepository>()
     .AddScoped<ITokenRepository, TokenRepository>()
-    .AddScoped<IClienteRepository, ClienteRepository>()
     .AddScoped<IUserRepository, UserRepository>()
 
     // MAPEADORES Y LÓGICA DE NEGOCIO
     .AddMappers()
     .AddServices()
     .AddExternalServices();
+
+// 🔹 Registramos el Seeder como Transient (se usa una vez al iniciar la app)
+//builder.Services.AddTransient<UserDataSeeder>();
 
 // 🔹 HttpClient para SUNAT (se agrega fuera del chain principal)
 builder.Services.AddHttpClient<ICpeService, CpeService>(client =>
@@ -54,7 +57,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: myAllowSpecificOrigins,
         builder =>
         {
-            builder.WithOrigins("http://localhost:7440") // puerto de Angular
+            builder.WithOrigins("http://localhost:4200") // puerto de Angular
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         });
@@ -63,6 +66,10 @@ builder.Services.AddCors(options =>
 // 🔍 Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+#endregion
+
+#region Pipeline HTTP
 
 var app = builder.Build();
 
@@ -89,4 +96,27 @@ app.UseMiddleware<ResponseTimeMiddlewareAsync>(); // Middleware personalizado
 
 app.MapControllers();                       // Map controllers al final
 
+//await ApplyMigrationsAndSeedDataAsync(app);
+
 app.Run();
+
+#endregion
+
+#region Método Semilla y Migraciones
+
+static async Task ApplyMigrationsAndSeedDataAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+
+    var dbContext = scope.ServiceProvider.GetRequiredService<ManagerContext>();
+
+    if (dbContext.Database.GetPendingMigrations().Any())
+    {
+        await dbContext.Database.MigrateAsync();
+    }
+
+    var userDataSeeder = scope.ServiceProvider.GetRequiredService<UserDataSeeder>();
+    await userDataSeeder.SeedAsync();
+}
+
+#endregion

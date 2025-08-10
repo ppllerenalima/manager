@@ -1,8 +1,3 @@
-using Manager.Domain.Requests.Cliente;
-using Manager.Domain.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-
 namespace Manager.API.Filters
 {
     public class ClienteExistsAttribute : TypeFilterAttribute
@@ -31,7 +26,7 @@ namespace Manager.API.Filters
 
                 if (result == null)
                 {
-                    context.Result = new NotFoundObjectResult(new JsonErrorPayload { DetailedMessage = $"Cliente with id {id} not exist." });
+                    context.Result = new NotFoundObjectResult(new JsonErrorPayload { DetailedMessage = $"El cliente con id {id} no existe." });
                     return;
                 }
 
