@@ -12,6 +12,10 @@ namespace Manager.Domain.Mappers
             CreateMap<AddGrupoRequest, Grupo>().ReverseMap();
             CreateMap<EditGrupoRequest, Grupo>().ReverseMap();
 
+            CreateMap<PersonaResponse, Persona>().ReverseMap();
+            CreateMap<AddPersonaRequest, Persona>().ReverseMap();
+            CreateMap<EditPersonaRequest, Persona>().ReverseMap();
+
             CreateMap<TicketResponse, Ticket>().ReverseMap();
             CreateMap<AddTicketRequest, Ticket>().ReverseMap();
             CreateMap<EditTicketRequest, Ticket>().ReverseMap();

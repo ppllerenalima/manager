@@ -22,3 +22,5 @@ global using System.IdentityModel.Tokens.Jwt;
 global using System.Linq.Expressions;
 global using System.Security.Claims;
 global using System.Text;
+global using Manager.Domain.Requests.Persona;
+global using Manager.Domain.Responses.PersonaResponses;

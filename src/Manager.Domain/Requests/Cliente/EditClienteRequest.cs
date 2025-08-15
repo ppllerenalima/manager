@@ -15,5 +15,6 @@ namespace Manager.Domain.Requests.Cliente
         public string Password { get; set; }
         public DateTime FechaRegistro { get; set; } = DateTime.Now;
         public bool IsInactive { get; set; } = false;
+        public Guid GrupoId { get; set; }
     }
 }

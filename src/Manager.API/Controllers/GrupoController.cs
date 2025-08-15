@@ -1,4 +1,6 @@
-﻿namespace Manager.API.Controllers
+﻿using Manager.API.RequestModels;
+
+namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -12,18 +14,20 @@
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] int pageSize = 10, [FromQuery] int pageIndex = 0)
+        public async Task<IActionResult> Get([FromQuery] PaginationRequestModel pagination)
         {
+            pagination ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
+
             var result = await _grupoService.GetGruposAsync();
 
             var totalGrupos = result.Count();
 
             var itemsOnPage = result
                 .OrderBy(c => c.Descripcion)
-                .Skip(pageSize * pageIndex)
-                .Take(pageSize);
+                .Skip(pagination.PageSize * pagination.PageIndex)
+                .Take(pagination.PageSize);
 
-            var model = new PaginatedResponseModel<GrupoResponse>(pageIndex, pageSize, totalGrupos, itemsOnPage);
+            var model = new PaginatedResponseModel<GrupoResponse>(pagination.PageIndex, pagination.PageSize, totalGrupos, itemsOnPage);
 
             return Ok(model);
         }

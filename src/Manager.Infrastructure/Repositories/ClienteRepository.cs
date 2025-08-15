@@ -1,3 +1,5 @@
+using Manager.Domain.Entities;
+
 namespace Manager.Infrastructure.Repositories
 {
     public class ClienteRepository : IClienteRepository
@@ -32,18 +34,18 @@ namespace Manager.Infrastructure.Repositories
             return item;
         }
 
-        public Cliente Add(Cliente item)
+        public Cliente Add(Cliente cliente)
         {
-            return _context.Clientes.Add(item).Entity;
+            return _context.Clientes.Add(cliente).Entity;
         }
 
-        public Cliente Update(Cliente item)
+        public Cliente Update(Cliente cliente)
         {
-            _context.Entry(item).State = EntityState.Modified;
-            return item;
+            _context.Entry(cliente).State = EntityState.Modified;
+            return cliente;
         }
 
-        public Cliente Delete(Cliente item)
+        public Cliente Delete(Cliente cliente)
         {
             throw new NotImplementedException();
         }

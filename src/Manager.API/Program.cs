@@ -16,6 +16,7 @@ builder.Services
     // REPOSITORIOS
     .AddScoped<IClienteRepository, ClienteRepository>()
     .AddScoped<IGrupoRepository, GrupoRepository>()
+    .AddScoped<IPersonaRepository, PersonaRepository>()
     .AddScoped<ITicketRepository, TicketRepository>()
     .AddScoped<ITokenRepository, TokenRepository>()
     .AddScoped<IUserRepository, UserRepository>()
@@ -26,7 +27,7 @@ builder.Services
     .AddExternalServices();
 
 // 🔹 Registramos el Seeder como Transient (se usa una vez al iniciar la app)
-//builder.Services.AddTransient<UserDataSeeder>();
+builder.Services.AddTransient<UserDataSeeder>();
 
 // 🔹 HttpClient para SUNAT (se agrega fuera del chain principal)
 builder.Services.AddHttpClient<ICpeService, CpeService>(client =>
@@ -96,7 +97,7 @@ app.UseMiddleware<ResponseTimeMiddlewareAsync>(); // Middleware personalizado
 
 app.MapControllers();                       // Map controllers al final
 
-//await ApplyMigrationsAndSeedDataAsync(app);
+await ApplyMigrationsAndSeedDataAsync(app);
 
 app.Run();
 
