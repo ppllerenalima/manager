@@ -8,6 +8,10 @@ namespace Manager.Domain.Mappers
             CreateMap<AddClienteRequest, Cliente>().ReverseMap();
             CreateMap<EditClienteRequest, Cliente>().ReverseMap();
 
+            CreateMap<CuentaBaseSolResponse, CuentaBaseSOL>().ReverseMap();
+            CreateMap<AddCuentaBaseSolRequest, CuentaBaseSOL>().ReverseMap();
+            CreateMap<EditCuentaBaseSolRequest, CuentaBaseSOL>().ReverseMap();
+
             CreateMap<GrupoResponse, Grupo>().ReverseMap();
             CreateMap<AddGrupoRequest, Grupo>().ReverseMap();
             CreateMap<EditGrupoRequest, Grupo>().ReverseMap();

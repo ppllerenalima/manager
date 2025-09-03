@@ -5,6 +5,7 @@ global using Manager.API.ResponseModels;
 global using Manager.Domain.Extensions;
 global using Manager.Domain.Repositories;
 global using Manager.Domain.Requests.Cliente;
+global using Manager.Domain.Requests.CuentaBaseSol;
 global using Manager.Domain.Requests.Grupo;
 global using Manager.Domain.Requests.Persona;
 global using Manager.Domain.Responses.GrupoResponses;

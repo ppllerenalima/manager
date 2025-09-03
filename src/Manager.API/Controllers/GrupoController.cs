@@ -64,8 +64,5 @@ namespace Manager.API.Controllers
             await _grupoService.DeleteGrupoAsync(request);
             return NoContent();
         }
-
-
-
     }
 }

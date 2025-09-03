@@ -3,6 +3,6 @@
     public class EntityBase
     {
         public Guid Id { get; set; }
-        public bool IsInactive { get; set; } = true;
+        public bool IsInactive { get; set; } = false;
     }
 }
