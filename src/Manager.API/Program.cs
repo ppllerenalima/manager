@@ -59,7 +59,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: myAllowSpecificOrigins,
         builder =>
         {
-            builder.WithOrigins("http://localhost:4200") // puerto de Angular
+            builder.WithOrigins("http://localhost:1846") // puerto de Angular
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         });

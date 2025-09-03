@@ -7,5 +7,6 @@ namespace Manager.Domain.Responses.CuentaBaseSolResponses
         public string ClientSecret { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
+        public bool IsInactive { get; set; }
     }
 }
