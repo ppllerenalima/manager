@@ -9,7 +9,7 @@ namespace Manager.API.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("api/user")]
+    [Route("api/[controller]")]
     [JsonException]
     public class UserController : ControllerBase
     {
