@@ -1,4 +1,6 @@
-﻿namespace Manager.Infrastructure
+﻿using Microsoft.EntityFrameworkCore.Storage;
+
+namespace Manager.Infrastructure
 {
     public class ManagerContext : IdentityDbContext<User>, IUnitOfWork
     {
@@ -41,6 +43,12 @@
         {
             await SaveChangesAsync(cancellationToken);
             return true;
+        }
+
+        // 🚀 Implementación de transacciones
+        public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            return await Database.BeginTransactionAsync(cancellationToken);
         }
     }
 }

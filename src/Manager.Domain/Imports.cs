@@ -19,6 +19,7 @@ global using Manager.Domain.Responses.TicketResponses;
 global using Manager.Domain.Responses.TokenResponses;
 global using Manager.Domain.Settings;
 global using Microsoft.AspNetCore.Identity;
+global using Microsoft.EntityFrameworkCore.Storage;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
 global using Microsoft.IdentityModel.Tokens;

@@ -44,91 +44,89 @@ namespace Manager.Domain.Services
             return !isAuthenticated ? null : new TokenResponse { AccessToken = GenerateSecurityToken(request) };
         }
 
-        //public async Task<UserResponse> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken)
-        //{
-        //    // iniciamos una transacción en el UnitOfWork
-        //    using var transaction = await _personaRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
-
-        //    try
-        //    {
-        //        var persona = new Persona
-        //        {
-        //            ApePaterno = request.ApePaterno,
-        //            ApeMaterno = request.ApeMaterno,
-        //            Nombre = request.Nombre,
-        //            IsInactive = request.IsInactive
-        //        };
-
-        //        await _personaRepository.AddAsync(persona, cancellationToken);
-        //        await _personaRepository.UnitOfWork.SaveChangesAsync();
-
-        //        var user = new User
-        //        {
-        //            UserName = request.UserName,
-        //            Email = request.Email,
-        //            EmailConfirmed = true,
-        //            PersonaId = persona.Id
-        //        };
-
-        //        var password = string.IsNullOrEmpty(request.Password)
-        //            ? request.UserName
-        //            : request.Password;
-
-        //        bool isCreated = await _userRepository.SignUpAsync(user, password, cancellationToken);
-
-        //        if (!isCreated)
-        //        {
-        //            await transaction.RollbackAsync(cancellationToken);
-        //            return null;
-        //        }
-
-        //        // confirmamos la transacción
-        //        await transaction.CommitAsync(cancellationToken);
-
-        //        return new UserResponse
-        //        {
-        //            ApePaterno = request.ApePaterno,
-        //            ApeMaterno = request.ApeMaterno,
-        //            Nombre = request.Nombre,
-        //            Email = request.Email
-        //        };
-        //    }
-        //    catch
-        //    {
-        //        // si ocurre cualquier excepción, revertimos todo
-        //        await transaction.RollbackAsync(cancellationToken);
-        //        throw;
-        //    }
-        //}
-
         public async Task<UserResponse> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken)
         {
-            var persona = new Persona
+            // iniciamos una transacción en el UnitOfWork
+            using var transaction = await _personaRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
+
+            try
             {
-                ApePaterno = request.ApePaterno,
-                ApeMaterno = request.ApeMaterno,
-                Nombre = request.Nombre,
-                IsInactive = request.IsInactive
-            };
+                var persona = new Persona
+                {
+                    ApePaterno = request.ApePaterno,
+                    ApeMaterno = request.ApeMaterno,
+                    Nombre = request.Nombre,
+                    IsInactive = request.IsInactive
+                };
 
-            await _personaRepository.AddAsync(persona, cancellationToken);
-            await _personaRepository.UnitOfWork.SaveChangesAsync();
+                await _personaRepository.AddAsync(persona, cancellationToken);
+                await _personaRepository.UnitOfWork.SaveChangesAsync();
 
-            var user = new User
+                var user = new User
+                {
+                    UserName = request.UserName,
+                    Email = request.Email,
+                    EmailConfirmed = true,
+                    PersonaId = persona.Id
+                };
+
+                var password = "Aa123*";
+
+                bool isCreated = await _userRepository.SignUpAsync(user, password, cancellationToken);
+
+                if (!isCreated)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return null;
+                }
+
+                // confirmamos la transacción
+                await transaction.CommitAsync(cancellationToken);
+
+                return new UserResponse
+                {
+                    ApePaterno = request.ApePaterno,
+                    ApeMaterno = request.ApeMaterno,
+                    Nombre = request.Nombre,
+                    Email = request.Email
+                };
+            }
+            catch
             {
-                UserName = request.UserName,
-                Email = request.Email,
-                EmailConfirmed = true,
-                PersonaId = persona.Id
-            };
-
-            if (string.IsNullOrEmpty(request.Password))
-                request.Password = request.UserName;
-
-            bool isCreated = await _userRepository.SignUpAsync(user, request.Password, cancellationToken);
-
-            return !isCreated ? null : new UserResponse { ApePaterno = request.ApePaterno, ApeMaterno = request.ApeMaterno, Nombre = request.Nombre, Email = request.Email };
+                // si ocurre cualquier excepción, revertimos todo
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
+
+        //public async Task<UserResponse> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken)
+        //{
+        //    var persona = new Persona
+        //    {
+        //        ApePaterno = request.ApePaterno,
+        //        ApeMaterno = request.ApeMaterno,
+        //        Nombre = request.Nombre,
+        //        IsInactive = request.IsInactive
+        //    };
+
+        //    await _personaRepository.AddAsync(persona, cancellationToken);
+        //    await _personaRepository.UnitOfWork.SaveChangesAsync();
+
+        //    var user = new User
+        //    {
+        //        UserName = request.UserName,
+        //        Email = request.Email,
+        //        EmailConfirmed = true,
+        //        PersonaId = persona.Id
+        //    };
+
+        //    if (string.IsNullOrEmpty(request.Password))
+        //        request.Password = request.UserName;
+
+        //    bool isCreated = await _userRepository.SignUpAsync(user, request.Password, cancellationToken);
+
+        //    return !isCreated ? null : new UserResponse { ApePaterno = request.ApePaterno, ApeMaterno = request.ApeMaterno, Nombre = request.Nombre, Email = request.Email };
+        //}
 
         private string GenerateSecurityToken(SignInRequest request)
         {
