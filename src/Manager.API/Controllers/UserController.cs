@@ -1,10 +1,3 @@
-using Manager.API.Filters;
-using Manager.Domain.Requests.User;
-using Manager.Domain.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-
 namespace Manager.API.Controllers
 {
     [Authorize]
@@ -20,16 +13,36 @@ namespace Manager.API.Controllers
             _userService = userService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] PaginationRequestModel pagination)
         {
-            var claim = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email);
+            pagination ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
 
-            if (claim == null) return Unauthorized();
+            var result = await _userService.GetUserAsync();
 
-            var token = await _userService.GetUserAsync(new GetUserRequest { Email = claim.Value });
-            return Ok(token);
+            var totalGrupos = result.Count();
+
+            var itemsOnPage = result
+                .OrderBy(c => c.NombreCompleto)
+                .Skip(pagination.PageSize * pagination.PageIndex)
+                .Take(pagination.PageSize);
+
+            var model = new PaginatedResponseModel<UserResponse>(pagination.PageIndex, pagination.PageSize, totalGrupos, itemsOnPage);
+
+            return Ok(model);
         }
+
+        //[HttpGet]
+        //public async Task<IActionResult> Get()
+        //{
+        //    var claim = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email);
+
+        //    if (claim == null) return Unauthorized();
+
+        //    var token = await _userService.GetUserAsync(new GetUserRequest { Email = claim.Value });
+        //    return Ok(token);
+        //}
 
         [AllowAnonymous]
         [HttpPost("auth")]
@@ -41,14 +54,14 @@ namespace Manager.API.Controllers
             return Ok(token);
         }
 
-        [AllowAnonymous]
-        [HttpPost]
-        public async Task<IActionResult> SignUp(SignUpRequest request)
-        {
-            var user = await _userService.SignUpAsync(request);
+        //[AllowAnonymous]
+        //[HttpPost]
+        //public async Task<IActionResult> SignUp(SignUpRequest request)
+        //{
+        //    var user = await _userService.SignUpAsync(request);
 
-            if (user == null) return BadRequest();
-            return CreatedAtAction(nameof(Get), new { }, null);
-        }
+        //    if (user == null) return BadRequest();
+        //    return CreatedAtAction(nameof(Get), new { }, null);
+        //}
     }
 }

@@ -10,7 +10,7 @@
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public async Task<ICollection<TEntity>> GetAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<ICollection<TEntity>> GetAsync(CancellationToken cancellationToken = default)
         {
             return await _context.Set<TEntity>().AsNoTracking().ToListAsync(cancellationToken);
         }

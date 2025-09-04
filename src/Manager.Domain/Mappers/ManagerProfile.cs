@@ -16,6 +16,15 @@ namespace Manager.Domain.Mappers
             CreateMap<AddGrupoRequest, Grupo>().ReverseMap();
             CreateMap<EditGrupoRequest, Grupo>().ReverseMap();
 
+            CreateMap<User, UserResponse>()
+                .ForMember(dest => dest.ApePaterno, opt => opt.MapFrom(src => src.Persona.ApePaterno))
+                .ForMember(dest => dest.ApeMaterno, opt => opt.MapFrom(src => src.Persona.ApeMaterno))
+                .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Persona.Nombre))
+                .ForMember(dest => dest.NombreCompleto,
+                opt => opt.MapFrom(src => $"{src.Persona.ApePaterno} {src.Persona.ApeMaterno}, {src.Persona.Nombre}"))
+                .ForMember(dest => dest.IsInactive, opt => opt.MapFrom(src => src.Persona.IsInactive))
+                .ReverseMap();
+
             CreateMap<PersonaResponse, Persona>().ReverseMap();
             CreateMap<AddPersonaRequest, Persona>().ReverseMap();
             CreateMap<EditPersonaRequest, Persona>().ReverseMap();

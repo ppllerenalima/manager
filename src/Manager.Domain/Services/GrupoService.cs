@@ -6,7 +6,6 @@ namespace Manager.Domain.Services
         private readonly IGrupoRepository _grupoRepository;
         private readonly ILogger<GrupoService> _logger;
 
-
         public GrupoService(IGrupoRepository grupoRepository, IMapper grupoMapper)
         {
             _grupoRepository = grupoRepository;

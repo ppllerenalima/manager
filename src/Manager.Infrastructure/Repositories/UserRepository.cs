@@ -29,5 +29,14 @@ namespace Manager.Infrastructure.Repositories
                 .Users
                 .FirstOrDefaultAsync(u => u.Email == requestEmail, cancellationToken);
         }
+
+        public async Task<ICollection<User>> GetAsync(CancellationToken cancellationToken)
+        {
+            return await _userManager
+                .Users
+                .Include(z=> z.Persona)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
     }
 }
