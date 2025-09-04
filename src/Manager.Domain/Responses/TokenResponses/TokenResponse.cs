@@ -1,4 +1,4 @@
-namespace Manager.Domain.Responses.TokenResponses
+﻿namespace Manager.Domain.Responses.TokenResponses
 {
     public class TokenResponse
     {
@@ -6,9 +6,13 @@ namespace Manager.Domain.Responses.TokenResponses
         public string? AccessToken { get; set; }
         public DateTime? FechaGeneracion { get; set; }
         public DateTime? FechaExpiracion { get; set; }
-
         public bool IsInactive { get; set; }
+        public string UserId { get; set; }
 
-        public Guid ClienteId { get; set; }
+        // 👇 Información básica del usuario
+        public string UserName { get; set; }
+        public string Email { get; set; }
+        public string? FullName { get; set; }
+        public string? Role { get; set; }
     }
 }

@@ -1,3 +1,5 @@
+using Manager.Domain.Entities;
+
 namespace Manager.Domain.Services
 {
     public class UserService : IUserService
@@ -28,17 +30,30 @@ namespace Manager.Domain.Services
         {
             var result = await _userRepository.GetAsync(cancellationToken);
 
-            //return _userMapper.Map<ICollection<UserResponse>>(result);
-
             return result
                 .Select(x => _userMapper.Map<UserResponse>(x));
         }
 
         public async Task<TokenResponse> SignInAsync(SignInRequest request, CancellationToken cancellationToken)
         {
-            bool isAuthenticated = await _userRepository.AuthenticateAsync(request.UserName, request.Password, cancellationToken);
+            var user = await _userRepository.AuthenticateAsync(request.UserName, request.Password, cancellationToken);
+            if (user == null) return null;
 
-            return !isAuthenticated ? null : new TokenResponse { AccessToken = GenerateSecurityToken(request) };
+            return new TokenResponse
+            {
+                Id = new Guid(),
+                AccessToken = GenerateSecurityToken(user),
+                FechaGeneracion = DateTime.UtcNow,
+                FechaExpiracion = DateTime.UtcNow.AddDays(_authenticationSettings.ExpirationDays),
+                IsInactive = false,
+                UserId = user.Id,
+
+                UserName = user.UserName,
+                Email = user.Email,
+                FullName = $"{user.Persona?.ApePaterno} {user.Persona?.ApeMaterno}, {user.Persona?.Nombre}",
+                Role = "Admin", // o desde BD si manejas roles dinámicos
+                
+            };
         }
 
         public async Task<UserResponse> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken)
@@ -165,8 +180,7 @@ namespace Manager.Domain.Services
             }
         }
 
-
-        private string GenerateSecurityToken(SignInRequest request)
+        private string GenerateSecurityToken(User request)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_authenticationSettings.Secret);
@@ -175,7 +189,10 @@ namespace Manager.Domain.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Email, request.UserName)
+                    new Claim(ClaimTypes.NameIdentifier, request.Id.ToString()), // id del usuario
+                    new Claim(ClaimTypes.Name, request.UserName),                // username real
+                    new Claim(ClaimTypes.Email, request.Email),                  // email real
+                    new Claim(ClaimTypes.Role, "Admin")                       // rol(es)
                 }),
                 Expires = DateTime.UtcNow.AddDays(_authenticationSettings.ExpirationDays),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),

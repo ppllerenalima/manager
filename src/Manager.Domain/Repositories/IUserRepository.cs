@@ -4,7 +4,7 @@ namespace Manager.Domain.Repositories
 {
     public interface IUserRepository
     {
-        Task<bool> AuthenticateAsync(string email, string password, CancellationToken cancellationToken = default);
+        Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken);
         Task<bool> SignUpAsync(User user, string password, CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(User user, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);

@@ -14,10 +14,19 @@ namespace Manager.Infrastructure.Repositories
             _signInManager = signInManager;
         }
 
-        public async Task<bool> AuthenticateAsync(string email, string password, CancellationToken cancellationToken)
+        //public async Task<bool> AuthenticateAsync(string email, string password, CancellationToken cancellationToken)
+        //{
+        //    var result = await _signInManager.PasswordSignInAsync(email, password, false, false);
+        //    return result.Succeeded;
+        //}
+
+        public async Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken)
         {
-            var result = await _signInManager.PasswordSignInAsync(email, password, false, false);
-            return result.Succeeded;
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null) return null;
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
+            return result.Succeeded ? user : null;
         }
 
         public async Task<bool> SignUpAsync(User user, string password, CancellationToken cancellationToken)
