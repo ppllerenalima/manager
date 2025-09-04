@@ -54,14 +54,14 @@ namespace Manager.API.Controllers
             return Ok(token);
         }
 
-        //[AllowAnonymous]
-        //[HttpPost]
-        //public async Task<IActionResult> SignUp(SignUpRequest request)
-        //{
-        //    var user = await _userService.SignUpAsync(request);
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<IActionResult> SignUp(SignUpRequest request)
+        {
+            var user = await _userService.SignUpAsync(request);
 
-        //    if (user == null) return BadRequest();
-        //    return CreatedAtAction(nameof(Get), new { }, null);
-        //}
+            if (user == null) return BadRequest();
+            return CreatedAtAction(nameof(Get), new { }, null);
+        }
     }
 }

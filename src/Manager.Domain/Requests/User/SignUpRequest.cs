@@ -2,10 +2,19 @@ namespace Manager.Domain.Requests.User
 {
     public class SignUpRequest
     {
+        public string UserName { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
-        public string FirstName { get; set; }       // Nombre
-        public string LastName { get; set; }        // Apellido paterno
-        public string MiddleName { get; set; }      // Apellido materno
+
+        public string ApePaterno { get; set; }
+        public string ApeMaterno { get; set; }
+        public string Nombre { get; set; }
+        public bool IsInactive { get; set; } = false;
+
+        public SignUpRequest()
+        {
+            Password = UserName;
+        }
     }
+
 }

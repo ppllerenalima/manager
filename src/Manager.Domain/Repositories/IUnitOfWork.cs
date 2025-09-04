@@ -1,8 +1,13 @@
-﻿namespace Manager.Domain.Repositories
+﻿//using Microsoft.EntityFrameworkCore.Storage;
+
+namespace Manager.Domain.Repositories
 {
     public interface IUnitOfWork : IDisposable
     {
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
         Task<bool> SaveEntitiesAsync(CancellationToken cancellationToken = default);
+
+        // 🚀 Métodos para manejo de transacciones
+        //Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
     }
 }
