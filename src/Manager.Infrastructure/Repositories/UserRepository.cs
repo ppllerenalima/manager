@@ -1,3 +1,6 @@
+using Manager.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
+
 namespace Manager.Infrastructure.Repositories
 {
     public class UserRepository : IUserRepository
@@ -23,11 +26,23 @@ namespace Manager.Infrastructure.Repositories
             return result.Succeeded;
         }
 
-        public async Task<User> GetByEmailAsync(string requestEmail, CancellationToken cancellationToken)
+        public async Task<bool> UpdateAsync(User user, CancellationToken cancellationToken)
         {
-            return await _userManager
+            var result = await _userManager.UpdateAsync(user);
+            return result.Succeeded;
+        }
+
+        public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        {
+            var item = await _userManager
                 .Users
-                .FirstOrDefaultAsync(u => u.Email == requestEmail, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (item is null)
+                throw new InvalidOperationException($"No se encontró el registro con id {id}");
+
+            var result = await _userManager.DeleteAsync(item);
+            return result.Succeeded;
         }
 
         public async Task<ICollection<User>> GetAsync(CancellationToken cancellationToken)
@@ -37,6 +52,14 @@ namespace Manager.Infrastructure.Repositories
                 .Include(z=> z.Persona)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
+        }
+
+        public async Task<User> GetAsync(string id, CancellationToken cancellationToken)
+        {
+            return await _userManager
+                .Users
+                .Include(z=> z.Persona)
+                .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace Manager.API.Controllers
+﻿namespace Manager.API.Controllers
 {
     [Authorize]
     [ApiController]
@@ -33,16 +33,12 @@ namespace Manager.API.Controllers
             return Ok(model);
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> Get()
-        //{
-        //    var claim = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email);
-
-        //    if (claim == null) return Unauthorized();
-
-        //    var token = await _userService.GetUserAsync(new GetUserRequest { Email = claim.Value });
-        //    return Ok(token);
-        //}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(string id)
+        {
+            var user = await _userService.GetUserAsync(new GetUserRequest { Id = id });
+            return Ok(user);
+        }
 
         [AllowAnonymous]
         [HttpPost("auth")]
@@ -61,7 +57,23 @@ namespace Manager.API.Controllers
             var user = await _userService.SignUpAsync(request);
 
             if (user == null) return BadRequest();
-            return CreatedAtAction(nameof(Get), new { }, null);
+            return CreatedAtAction(nameof(Get), new { id = user.Id }, user);
+        }
+
+        [HttpPut("{id}")]
+        [UserExists]
+        public async Task<IActionResult> Update(string id, EditUserRequest request)
+        {
+            request.Id = id;
+            var result = await _userService.EditUserAsync(request);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            await _userService.DeleteAsync(id);
+            return NoContent();
         }
     }
 }

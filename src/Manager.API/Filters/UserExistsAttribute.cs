@@ -1,14 +1,14 @@
 ﻿namespace Manager.API.Filters
 {
-    public class PersonaExistsAttribute : TypeFilterAttribute
+    public class UserExistsAttribute : TypeFilterAttribute
     {
-        public PersonaExistsAttribute() : base(typeof(PersonaExistsFilterImpl)) { }
+        public UserExistsAttribute() : base(typeof(UserExistsFilterImpl)) { }
 
-        public class PersonaExistsFilterImpl : IAsyncActionFilter
+        public class UserExistsFilterImpl : IAsyncActionFilter
         {
-            private readonly IPersonaService _userService;
+            private readonly IUserService _userService;
 
-            public PersonaExistsFilterImpl(IPersonaService userService)
+            public UserExistsFilterImpl(IUserService userService)
             {
                 _userService = userService;
             }
@@ -16,13 +16,13 @@
             public async Task OnActionExecutionAsync(ActionExecutingContext context,
                 ActionExecutionDelegate next)
             {
-                if (!(context.ActionArguments["id"] is Guid id))
+                if (!(context.ActionArguments["id"] is string id))
                 {
                     context.Result = new BadRequestResult();
                     return;
                 }
 
-                var result = await _userService.GetPersonaAsync(new GetPersonaRequest { Id = id });
+                var result = await _userService.GetUserAsync(new GetUserRequest { Id = id });
 
                 if (result == null)
                 {

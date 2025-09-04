@@ -24,10 +24,15 @@ namespace Manager.Domain.Mappers
                 opt => opt.MapFrom(src => $"{src.Persona.ApePaterno} {src.Persona.ApeMaterno}, {src.Persona.Nombre}"))
                 .ForMember(dest => dest.IsInactive, opt => opt.MapFrom(src => src.Persona.IsInactive))
                 .ReverseMap();
+            CreateMap<EditUserRequest, User>().ReverseMap();
 
             CreateMap<PersonaResponse, Persona>().ReverseMap();
             CreateMap<AddPersonaRequest, Persona>().ReverseMap();
             CreateMap<EditPersonaRequest, Persona>().ReverseMap();
+            CreateMap<EditUserRequest, Persona>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.PersonaId))
+                .ReverseMap();
+
 
             CreateMap<TicketResponse, Ticket>().ReverseMap();
             CreateMap<AddTicketRequest, Ticket>().ReverseMap();

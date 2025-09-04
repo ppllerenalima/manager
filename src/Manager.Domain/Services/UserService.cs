@@ -18,14 +18,11 @@ namespace Manager.Domain.Services
             _logger = logger;
         }
 
-        //public async Task<UserResponse> GetUserAsync(GetUserRequest request, CancellationToken cancellationToken)
-        //{
-        //    var response = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
-        //    return new UserResponse
-        //    {
-        //        Email = response.Email
-        //    };
-        //}
+        public async Task<UserResponse> GetUserAsync(GetUserRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _userRepository.GetAsync(request.Id, cancellationToken);
+            return _userMapper.Map<UserResponse>(result);
+        }
 
         public async Task<IEnumerable<UserResponse>> GetUserAsync(CancellationToken cancellationToken)
         {
@@ -99,34 +96,75 @@ namespace Manager.Domain.Services
             }
         }
 
-        //public async Task<UserResponse> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken)
-        //{
-        //    var persona = new Persona
-        //    {
-        //        ApePaterno = request.ApePaterno,
-        //        ApeMaterno = request.ApeMaterno,
-        //        Nombre = request.Nombre,
-        //        IsInactive = request.IsInactive
-        //    };
+        public async Task<UserResponse> EditUserAsync(EditUserRequest request, CancellationToken cancellationToken)
+        {
+            // Abrimos una transacción en el UnitOfWork
+            await using var transaction = await _personaRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
 
-        //    await _personaRepository.AddAsync(persona, cancellationToken);
-        //    await _personaRepository.UnitOfWork.SaveChangesAsync();
+            try
+            {
+                // 1. Obtener el registro existente
+                var existingRecord = await _userRepository.GetAsync(request.Id, cancellationToken);
+                if (existingRecord == null)
+                    throw new ArgumentException($"No se encontró el usuario con Id {request.Id}");
 
-        //    var user = new User
-        //    {
-        //        UserName = request.UserName,
-        //        Email = request.Email,
-        //        EmailConfirmed = true,
-        //        PersonaId = persona.Id
-        //    };
+                // 2. Actualizar Persona
+                var existingPersona = existingRecord.Persona;
+                if (existingPersona == null)
+                    throw new ArgumentException($"No se encontró la persona vinculada al usuario {request.Id}");
 
-        //    if (string.IsNullOrEmpty(request.Password))
-        //        request.Password = request.UserName;
+                _userMapper.Map(request, existingPersona); // mapea sobre la misma instancia
 
-        //    bool isCreated = await _userRepository.SignUpAsync(user, request.Password, cancellationToken);
+                // 3. Actualizar User (sobre la misma entidad ya trackeada)
+                _userMapper.Map(request, existingRecord);
 
-        //    return !isCreated ? null : new UserResponse { ApePaterno = request.ApePaterno, ApeMaterno = request.ApeMaterno, Nombre = request.Nombre, Email = request.Email };
-        //}
+                // 4. Guardar cambios de ambas entidades en una sola transacción
+                await _personaRepository.UnitOfWork.SaveChangesAsync(cancellationToken);
+
+                // 5. Confirmar transacción
+                await transaction.CommitAsync(cancellationToken);
+
+                // 6. Retornar DTO
+                return _userMapper.Map<UserResponse>(existingRecord);
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+
+        public async Task DeleteAsync(string id, CancellationToken cancellationToken)
+        {
+            // 1. Obtener el registro existente
+            var existingRecord = await _userRepository.GetAsync(id, cancellationToken);
+
+            // 1. Iniciar una transacción en el contexto principal
+            await using var transaction = await _personaRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
+
+            try
+            {
+                // 3. Eliminar usuario
+                var result = await _userRepository.DeleteAsync(id);
+                if (!result)
+                {
+                    throw new InvalidOperationException($"Error al eliminar usuario.");
+                }
+
+                // 4. Eliminar persona asociada (si existe)
+                await _personaRepository.DeleteAsync(existingRecord.PersonaId, cancellationToken);
+
+                // 5. Confirmar transacción
+                await _personaRepository.UnitOfWork.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+
 
         private string GenerateSecurityToken(SignInRequest request)
         {
