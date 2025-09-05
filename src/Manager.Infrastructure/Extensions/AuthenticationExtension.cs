@@ -1,12 +1,3 @@
-using Manager.Domain.Entities;
-using Manager.Domain.Settings;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
 namespace Manager.Infrastructure.Extensions
 {
     public static class AuthenticationExtensions
@@ -32,8 +23,9 @@ namespace Manager.Infrastructure.Extensions
             //    .AddEntityFrameworkStores<ManagerContext>()
             //    .AddDefaultTokenProviders();
 
-            services.AddIdentity<User, IdentityRole>()
-                .AddEntityFrameworkStores<ManagerContext>();
+            services.AddIdentity<User, Role>()
+                .AddEntityFrameworkStores<ManagerContext>()
+                .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
             {

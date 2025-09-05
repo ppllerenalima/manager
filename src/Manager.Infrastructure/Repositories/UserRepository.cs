@@ -1,6 +1,3 @@
-using Manager.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
-
 namespace Manager.Infrastructure.Repositories
 {
     public class UserRepository : IUserRepository
@@ -41,7 +38,7 @@ namespace Manager.Infrastructure.Repositories
             return result.Succeeded;
         }
 
-        public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var item = await _userManager
                 .Users
@@ -58,16 +55,16 @@ namespace Manager.Infrastructure.Repositories
         {
             return await _userManager
                 .Users
-                .Include(z=> z.Persona)
+                .Include(z => z.Persona)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<User> GetAsync(string id, CancellationToken cancellationToken)
+        public async Task<User> GetAsync(Guid id, CancellationToken cancellationToken)
         {
             return await _userManager
                 .Users
-                .Include(z=> z.Persona)
+                .Include(z => z.Persona)
                 .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
         }
     }

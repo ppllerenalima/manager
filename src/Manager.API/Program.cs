@@ -18,6 +18,7 @@ builder.Services
     .AddScoped<ICuentaBaseSolRepository, CuentaBaseSolRepository>()
     .AddScoped<IGrupoRepository, GrupoRepository>()
     .AddScoped<IPersonaRepository, PersonaRepository>()
+    .AddScoped<IRoleRepository, RoleRepository>()
     .AddScoped<ITicketRepository, TicketRepository>()
     .AddScoped<ITokenRepository, TokenRepository>()
     .AddScoped<IUserRepository, UserRepository>()

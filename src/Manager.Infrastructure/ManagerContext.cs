@@ -1,14 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
-
-namespace Manager.Infrastructure
+﻿namespace Manager.Infrastructure
 {
-    public class ManagerContext : IdentityDbContext<User>, IUnitOfWork
+    public class ManagerContext : IdentityDbContext<User, Role, Guid>, IUnitOfWork
     {
         public const string DEFAULT_SCHEMA = "manager";
 
         public DbSet<Cliente> Clientes { get; set; }
         public DbSet<CuentaBaseSOL> CuentaBaseSOL { get; set; }
         public DbSet<Grupo> Grupos { get; set; }
+        public DbSet<Role> Roles { get; set; }
         public DbSet<Persona> Personas { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Token> Tokens { get; set; }
@@ -28,12 +27,12 @@ namespace Manager.Infrastructure
 
             // 3️⃣ Renombrar tablas de Identity (opcional pero recomendado)
             modelBuilder.Entity<User>().ToTable("Usuarios");
-            modelBuilder.Entity<IdentityRole>().ToTable("Roles");
-            modelBuilder.Entity<IdentityUserRole<string>>().ToTable("UsuarioRoles");
-            modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("UsuarioClaims");
-            modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("UsuarioLogins");
-            modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("RolClaims");
-            modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UsuarioTokens");
+            modelBuilder.Entity<Role>().ToTable("Roles");
+            modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("UsuarioRoles");
+            modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("UsuarioClaims");
+            modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("UsuarioLogins");
+            modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("RolClaims");
+            modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("UsuarioTokens");
 
             // 4️⃣ Aplicar automáticamente todas las configuraciones de IEntityTypeConfiguration
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ManagerContext).Assembly);

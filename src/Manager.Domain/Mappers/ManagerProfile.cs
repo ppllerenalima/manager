@@ -26,6 +26,9 @@ namespace Manager.Domain.Mappers
                 .ReverseMap();
             CreateMap<EditUserRequest, User>().ReverseMap();
 
+            CreateMap<Role, RoleResponse>().ReverseMap();
+            CreateMap<EditRoleRequest, Role>().ReverseMap();
+
             CreateMap<PersonaResponse, Persona>().ReverseMap();
             CreateMap<AddPersonaRequest, Persona>().ReverseMap();
             CreateMap<EditPersonaRequest, Persona>().ReverseMap();

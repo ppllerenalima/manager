@@ -7,6 +7,7 @@ global using Manager.Domain.Requests.Cliente;
 global using Manager.Domain.Requests.CuentaBaseSol;
 global using Manager.Domain.Requests.Grupo;
 global using Manager.Domain.Requests.Persona;
+global using Manager.Domain.Requests.Role;
 global using Manager.Domain.Requests.Sire.Compras;
 global using Manager.Domain.Requests.Ticket;
 global using Manager.Domain.Requests.Token;

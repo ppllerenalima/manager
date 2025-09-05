@@ -34,7 +34,7 @@
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(string id)
+        public async Task<IActionResult> Get(Guid id)
         {
             var user = await _userService.GetUserAsync(new GetUserRequest { Id = id });
             return Ok(user);
@@ -62,7 +62,7 @@
 
         [HttpPut("{id}")]
         [UserExists]
-        public async Task<IActionResult> Update(string id, EditUserRequest request)
+        public async Task<IActionResult> Update(Guid id, EditUserRequest request)
         {
             request.Id = id;
             var result = await _userService.EditUserAsync(request);
@@ -70,7 +70,7 @@
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             await _userService.DeleteAsync(id);
             return NoContent();

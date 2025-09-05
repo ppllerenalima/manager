@@ -15,16 +15,13 @@
         public async Task SeedAsync()
         {
             var userManager = service.GetRequiredService<UserManager<User>>();
-            var roleManager = service.GetRequiredService<RoleManager<IdentityRole>>();
+            var roleManager = service.GetRequiredService<RoleManager<Role>>();
             var personaRepository = service.GetRequiredService<IPersonaRepository>();
 
             const string adminRole = "Administrador";
 
-            // 1️⃣ Crear rol si no existe
-            if (!await roleManager.RoleExistsAsync(adminRole))
-            {
-                await roleManager.CreateAsync(new IdentityRole(adminRole));
-            }
+            // 1️⃣ Seedear roles primero
+            await SeedRolesAsync(service);
 
             // 2️⃣ Verificar si el usuario ya existe
             string userName = "42928945";
@@ -50,7 +47,7 @@
                     UserName = userName,
                     Email = "pp.llerenalima@gmail.com",
                     EmailConfirmed = true,
-                    PersonaId = persona.Id // 🔹 Aquí ya existe el ID
+                    PersonaId = persona.Id
                 };
 
                 var result = await userManager.CreateAsync(adminUser, "Aa123*");
@@ -65,6 +62,28 @@
                     {
                         Console.WriteLine($"❌ Error creando usuario: {error.Description}");
                     }
+                }
+            }
+        }
+
+        public async Task SeedRolesAsync(IServiceProvider service)
+        {
+            var roleManager = service.GetRequiredService<RoleManager<Role>>();
+
+            // Lista de roles iniciales
+            var roles = new List<Role>
+            {
+                new Role { Name = "Administrador", NormalizedName = "ADMINISTRADOR" },
+                new Role { Name = "Usuario", NormalizedName = "USUARIO" },
+                new Role { Name = "Supervisor", NormalizedName = "SUPERVISOR" }
+    };
+
+            foreach (var role in roles)
+            {
+                // Verifica por nombre, no por Id
+                if (!await roleManager.RoleExistsAsync(role.Name))
+                {
+                    await roleManager.CreateAsync(role);
                 }
             }
         }

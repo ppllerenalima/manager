@@ -7,6 +7,6 @@ namespace Manager.Domain.Services
         Task<TokenResponse> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default);
         Task<UserResponse> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default);
         Task<UserResponse> EditUserAsync(EditUserRequest request, CancellationToken cancellationToken = default);
-        Task DeleteAsync(string id, CancellationToken cancellationToken = default);
+        Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }

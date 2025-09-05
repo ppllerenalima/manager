@@ -2,10 +2,10 @@
 {
     public class EditUserRequest
     {
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
-        public Guid PersonaId{ get; set; }
+        public Guid PersonaId { get; set; }
 
         public string ApePaterno { get; set; }
         public string ApeMaterno { get; set; }

@@ -1,5 +1,3 @@
-using Manager.Domain.Entities;
-
 namespace Manager.Domain.Services
 {
     public class UserService : IUserService
@@ -52,7 +50,7 @@ namespace Manager.Domain.Services
                 Email = user.Email,
                 FullName = $"{user.Persona?.ApePaterno} {user.Persona?.ApeMaterno}, {user.Persona?.Nombre}",
                 Role = "Admin", // o desde BD si manejas roles dinámicos
-                
+
             };
         }
 
@@ -149,7 +147,7 @@ namespace Manager.Domain.Services
             }
         }
 
-        public async Task DeleteAsync(string id, CancellationToken cancellationToken)
+        public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
         {
             // 1. Obtener el registro existente
             var existingRecord = await _userRepository.GetAsync(id, cancellationToken);

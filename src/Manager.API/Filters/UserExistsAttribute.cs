@@ -16,7 +16,7 @@
             public async Task OnActionExecutionAsync(ActionExecutingContext context,
                 ActionExecutionDelegate next)
             {
-                if (!(context.ActionArguments["id"] is string id))
+                if (!(context.ActionArguments["id"] is Guid id))
                 {
                     context.Result = new BadRequestResult();
                     return;

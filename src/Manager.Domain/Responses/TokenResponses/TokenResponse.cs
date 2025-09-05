@@ -7,7 +7,7 @@
         public DateTime? FechaGeneracion { get; set; }
         public DateTime? FechaExpiracion { get; set; }
         public bool IsInactive { get; set; }
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
 
         // 👇 Información básica del usuario
         public string UserName { get; set; }
