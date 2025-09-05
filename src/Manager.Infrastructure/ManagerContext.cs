@@ -1,6 +1,15 @@
 ﻿namespace Manager.Infrastructure
 {
-    public class ManagerContext : IdentityDbContext<User, Role, Guid>, IUnitOfWork
+    public class ManagerContext : IdentityDbContext<
+        User,
+        Role,
+        Guid,
+        IdentityUserClaim<Guid>,
+        UserRole, // 👈 tu entidad intermedia personalizada
+        IdentityUserLogin<Guid>,
+        IdentityRoleClaim<Guid>,
+        IdentityUserToken<Guid>
+    >, IUnitOfWork
     {
         public const string DEFAULT_SCHEMA = "manager";
 
@@ -12,6 +21,7 @@
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Token> Tokens { get; set; }
         public DbSet<User> Users { get; set; }
+        //public DbSet<UserRole> UserRoles { get; set; }
 
         public ManagerContext(DbContextOptions<ManagerContext> options) : base(options)
         {
@@ -28,13 +38,29 @@
             // 3️⃣ Renombrar tablas de Identity (opcional pero recomendado)
             modelBuilder.Entity<User>().ToTable("Usuarios");
             modelBuilder.Entity<Role>().ToTable("Roles");
-            modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("UsuarioRoles");
+            modelBuilder.Entity<UserRole>().ToTable("UsuarioRoles"); // 👈 tu tabla intermedi
             modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("UsuarioClaims");
             modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("UsuarioLogins");
             modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("RolClaims");
             modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("UsuarioTokens");
 
-            // 4️⃣ Aplicar automáticamente todas las configuraciones de IEntityTypeConfiguration
+            // 4️⃣ Configuración extra de UserRole para evitar cascadas múltiples
+            modelBuilder.Entity<UserRole>(entity =>
+            {
+                entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+
+                entity.HasOne(ur => ur.User)
+                      .WithMany(u => u.UserRoles)
+                      .HasForeignKey(ur => ur.UserId)
+                      .OnDelete(DeleteBehavior.Restrict); // 👈 evita ciclos
+
+                entity.HasOne(ur => ur.Role)
+                      .WithMany(r => r.UserRoles)
+                      .HasForeignKey(ur => ur.RoleId)
+                      .OnDelete(DeleteBehavior.Restrict); // 👈 evita ciclos
+            });
+
+            // 5 Aplicar automáticamente todas las configuraciones de IEntityTypeConfiguration
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ManagerContext).Assembly);
         }
 

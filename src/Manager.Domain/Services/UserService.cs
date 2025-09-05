@@ -1,3 +1,5 @@
+Ôªøusing Microsoft.AspNetCore.Identity;
+
 namespace Manager.Domain.Services
 {
     public class UserService : IUserService
@@ -37,6 +39,10 @@ namespace Manager.Domain.Services
             var user = await _userRepository.AuthenticateAsync(request.UserName, request.Password, cancellationToken);
             if (user == null) return null;
 
+            var persona = await _personaRepository.GetAsync(user.PersonaId, cancellationToken);
+
+            var roles = await _userRepository.GetRolesAsync(user);
+
             return new TokenResponse
             {
                 Id = new Guid(),
@@ -48,15 +54,14 @@ namespace Manager.Domain.Services
 
                 UserName = user.UserName,
                 Email = user.Email,
-                FullName = $"{user.Persona?.ApePaterno} {user.Persona?.ApeMaterno}, {user.Persona?.Nombre}",
-                Role = "Admin", // o desde BD si manejas roles din·micos
-
+                FullName = $"{persona.ApePaterno} {persona.ApeMaterno}, {persona.Nombre}",
+                Role = roles.FirstOrDefault(), // tomamos el primer rol
             };
         }
 
         public async Task<UserResponse> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken)
         {
-            // iniciamos una transacciÛn en el UnitOfWork
+            // iniciamos una transacci√≥n en el UnitOfWork
             using var transaction = await _personaRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
@@ -82,7 +87,9 @@ namespace Manager.Domain.Services
 
                 var password = "Aa123*";
 
-                bool isCreated = await _userRepository.SignUpAsync(user, password, cancellationToken);
+                var createdRole = await _userRepository.SignUpAsync(user, password, cancellationToken);
+
+                bool isCreated = await _userRepository.AddToRoleAsync(user, request.Role);
 
                 if (!isCreated)
                 {
@@ -90,7 +97,7 @@ namespace Manager.Domain.Services
                     return null;
                 }
 
-                // confirmamos la transacciÛn
+                // confirmamos la transacci√≥n
                 await transaction.CommitAsync(cancellationToken);
 
                 return new UserResponse
@@ -103,7 +110,7 @@ namespace Manager.Domain.Services
             }
             catch
             {
-                // si ocurre cualquier excepciÛn, revertimos todo
+                // si ocurre cualquier excepci√≥n, revertimos todo
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
@@ -111,7 +118,7 @@ namespace Manager.Domain.Services
 
         public async Task<UserResponse> EditUserAsync(EditUserRequest request, CancellationToken cancellationToken)
         {
-            // Abrimos una transacciÛn en el UnitOfWork
+            // Abrimos una transacci√≥n en el UnitOfWork
             await using var transaction = await _personaRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
@@ -119,25 +126,33 @@ namespace Manager.Domain.Services
                 // 1. Obtener el registro existente
                 var existingRecord = await _userRepository.GetAsync(request.Id, cancellationToken);
                 if (existingRecord == null)
-                    throw new ArgumentException($"No se encontrÛ el usuario con Id {request.Id}");
+                    throw new ArgumentException($"No se encontr√≥ el usuario con Id {request.Id}");
 
                 // 2. Actualizar Persona
                 var existingPersona = existingRecord.Persona;
                 if (existingPersona == null)
-                    throw new ArgumentException($"No se encontrÛ la persona vinculada al usuario {request.Id}");
+                    throw new ArgumentException($"No se encontr√≥ la persona vinculada al usuario {request.Id}");
 
                 _userMapper.Map(request, existingPersona); // mapea sobre la misma instancia
 
                 // 3. Actualizar User (sobre la misma entidad ya trackeada)
                 _userMapper.Map(request, existingRecord);
 
-                // 4. Guardar cambios de ambas entidades en una sola transacciÛn
+                // 4. Guardar cambios de ambas entidades en una sola transacci√≥n
                 await _personaRepository.UnitOfWork.SaveChangesAsync(cancellationToken);
 
-                // 5. Confirmar transacciÛn
+                // 5Ô∏è‚É£ Actualizar rol del usuario si viene en el request
+                if (!string.IsNullOrWhiteSpace(request.Role))
+                {
+                    var roleUpdated = await _userRepository.UpdateUserRoleAsync(existingRecord, request.Role, cancellationToken);
+                    if (!roleUpdated)
+                        throw new InvalidOperationException($"No se pudo actualizar el rol del usuario {request.Id}");
+                }
+
+                // 6. Confirmar transacci√≥n
                 await transaction.CommitAsync(cancellationToken);
 
-                // 6. Retornar DTO
+                // 7. Retornar DTO
                 return _userMapper.Map<UserResponse>(existingRecord);
             }
             catch
@@ -152,7 +167,7 @@ namespace Manager.Domain.Services
             // 1. Obtener el registro existente
             var existingRecord = await _userRepository.GetAsync(id, cancellationToken);
 
-            // 1. Iniciar una transacciÛn en el contexto principal
+            // 1. Iniciar una transacci√≥n en el contexto principal
             await using var transaction = await _personaRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
@@ -167,7 +182,7 @@ namespace Manager.Domain.Services
                 // 4. Eliminar persona asociada (si existe)
                 await _personaRepository.DeleteAsync(existingRecord.PersonaId, cancellationToken);
 
-                // 5. Confirmar transacciÛn
+                // 5. Confirmar transacci√≥n
                 await _personaRepository.UnitOfWork.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
             }

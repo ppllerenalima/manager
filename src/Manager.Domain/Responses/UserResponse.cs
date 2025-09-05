@@ -12,5 +12,7 @@ namespace Manager.Domain.Responses
         public string Nombre { get; set; }
         public string NombreCompleto { get; set; }
         public bool IsInactive { get; set; }
+
+        public string Role { get; set; }
     }
 }

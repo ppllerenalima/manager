@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Manager.API.Migrations
 {
     [DbContext(typeof(ManagerContext))]
-    [Migration("20250905042955_InitialProject")]
+    [Migration("20250905142801_InitialProject")]
     partial class InitialProject
     {
         /// <inheritdoc />
@@ -356,6 +356,21 @@ namespace Manager.API.Migrations
                     b.ToTable("Usuarios", "manager");
                 });
 
+            modelBuilder.Entity("Manager.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UsuarioRoles", "manager");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
@@ -425,21 +440,6 @@ namespace Manager.API.Migrations
                     b.ToTable("UsuarioLogins", "manager");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("UsuarioRoles", "manager");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -503,6 +503,25 @@ namespace Manager.API.Migrations
                     b.Navigation("Persona");
                 });
 
+            modelBuilder.Entity("Manager.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("Manager.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Manager.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Manager.Domain.Entities.Role", null)
@@ -523,21 +542,6 @@ namespace Manager.API.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("Manager.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
-                {
-                    b.HasOne("Manager.Domain.Entities.Role", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Manager.Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -569,6 +573,16 @@ namespace Manager.API.Migrations
                 {
                     b.Navigation("User")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Manager.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Manager.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

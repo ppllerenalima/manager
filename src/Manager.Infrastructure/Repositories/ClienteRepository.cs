@@ -16,6 +16,7 @@ namespace Manager.Infrastructure.Repositories
         public async Task<IEnumerable<Cliente>> GetAsync(string search)
         {
             return await _context.Clientes
+                .Include(z => z.Grupo)
                 .Where(z => z.Ruc.Contains(search) || z.Razonsocial.Contains(search))
                 .AsNoTracking()
                 .ToListAsync();

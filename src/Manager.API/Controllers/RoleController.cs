@@ -35,6 +35,15 @@ namespace Manager.API.Controllers
             return Ok(model);
         }
 
+        [AllowAnonymous]
+        [HttpGet("list")] // 👉 api/role/list
+        public async Task<IActionResult> Get()
+        {
+            var result = await _roleService.GetRoleAsync();
+
+            return Ok(result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {

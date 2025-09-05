@@ -1,10 +1,12 @@
-namespace Manager.Domain.Mappers
+﻿namespace Manager.Domain.Mappers
 {
     public class ManagerProfile : Profile
     {
         public ManagerProfile()
         {
-            CreateMap<ClienteResponse, Cliente>().ReverseMap();
+            CreateMap<Cliente, ClienteResponse>()
+                .ForMember(dest => dest.grupo, opt => opt.MapFrom(src => src.Grupo.Descripcion))
+                .ReverseMap();
             CreateMap<AddClienteRequest, Cliente>().ReverseMap();
             CreateMap<EditClienteRequest, Cliente>().ReverseMap();
 
@@ -23,6 +25,9 @@ namespace Manager.Domain.Mappers
                 .ForMember(dest => dest.NombreCompleto,
                 opt => opt.MapFrom(src => $"{src.Persona.ApePaterno} {src.Persona.ApeMaterno}, {src.Persona.Nombre}"))
                 .ForMember(dest => dest.IsInactive, opt => opt.MapFrom(src => src.Persona.IsInactive))
+
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.UserRoles.Select(ur => ur.Role.Name).FirstOrDefault())) // 👈 toma el primer rol
+
                 .ReverseMap();
             CreateMap<EditUserRequest, User>().ReverseMap();
 

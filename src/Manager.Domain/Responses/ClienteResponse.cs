@@ -16,5 +16,6 @@ namespace Manager.Domain.Responses
         public DateTime FechaRegistro { get; set; }
         public bool IsInactive { get; set; }
         public Guid GrupoId { get; set; }
+        public string grupo { get; set; }
     }
 }

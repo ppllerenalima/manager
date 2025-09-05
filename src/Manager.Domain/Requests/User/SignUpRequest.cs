@@ -11,10 +11,11 @@ namespace Manager.Domain.Requests.User
         public string Nombre { get; set; }
         public bool IsInactive { get; set; } = false;
 
+        public string Role { get; set; }
+
         public SignUpRequest()
         {
             Password = UserName;
         }
     }
-
 }

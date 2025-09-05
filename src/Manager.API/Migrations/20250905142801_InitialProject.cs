@@ -282,14 +282,14 @@ namespace Manager.API.Migrations
                         principalSchema: "manager",
                         principalTable: "Roles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_UsuarioRoles_Usuarios_UserId",
                         column: x => x.UserId,
                         principalSchema: "manager",
                         principalTable: "Usuarios",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(

@@ -33,6 +33,7 @@
             return Ok(model);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
