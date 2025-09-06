@@ -20,6 +20,7 @@ namespace Manager.API.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Ruc = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ClientId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     ClientSecret = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Username = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -74,6 +75,30 @@ namespace Manager.API.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TokenBases",
+                schema: "manager",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AccessToken = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FechaGeneracion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaExpiracion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CuentaBaseSolId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsInactive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TokenBases", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TokenBases_CuentaBaseSOL_CuentaBaseSolId",
+                        column: x => x.CuentaBaseSolId,
+                        principalSchema: "manager",
+                        principalTable: "CuentaBaseSOL",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -341,6 +366,13 @@ namespace Manager.API.Migrations
                 column: "ClienteId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TokenBases_CuentaBaseSolId",
+                schema: "manager",
+                table: "TokenBases",
+                column: "CuentaBaseSolId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tokens_ClienteId",
                 schema: "manager",
                 table: "Tokens",
@@ -391,15 +423,15 @@ namespace Manager.API.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "CuentaBaseSOL",
-                schema: "manager");
-
-            migrationBuilder.DropTable(
                 name: "RolClaims",
                 schema: "manager");
 
             migrationBuilder.DropTable(
                 name: "Tickets",
+                schema: "manager");
+
+            migrationBuilder.DropTable(
+                name: "TokenBases",
                 schema: "manager");
 
             migrationBuilder.DropTable(
@@ -420,6 +452,10 @@ namespace Manager.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "UsuarioTokens",
+                schema: "manager");
+
+            migrationBuilder.DropTable(
+                name: "CuentaBaseSOL",
                 schema: "manager");
 
             migrationBuilder.DropTable(

@@ -106,6 +106,10 @@ namespace Manager.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("Ruc")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -279,6 +283,36 @@ namespace Manager.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Tokens", "manager");
+                });
+
+            modelBuilder.Entity("Manager.Domain.Entities.TokenBase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccessToken")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("CuentaBaseSolId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("FechaExpiracion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaGeneracion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsInactive")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CuentaBaseSolId")
+                        .IsUnique();
+
+                    b.ToTable("TokenBases", "manager");
                 });
 
             modelBuilder.Entity("Manager.Domain.Entities.User", b =>
@@ -489,6 +523,17 @@ namespace Manager.API.Migrations
                     b.Navigation("Cliente");
                 });
 
+            modelBuilder.Entity("Manager.Domain.Entities.TokenBase", b =>
+                {
+                    b.HasOne("Manager.Domain.Entities.CuentaBaseSOL", "CuentaBaseSol")
+                        .WithOne("TokenBase")
+                        .HasForeignKey("Manager.Domain.Entities.TokenBase", "CuentaBaseSolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CuentaBaseSol");
+                });
+
             modelBuilder.Entity("Manager.Domain.Entities.User", b =>
                 {
                     b.HasOne("Manager.Domain.Entities.Persona", "Persona")
@@ -558,6 +603,12 @@ namespace Manager.API.Migrations
             modelBuilder.Entity("Manager.Domain.Entities.Cliente", b =>
                 {
                     b.Navigation("Token")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Manager.Domain.Entities.CuentaBaseSOL", b =>
+                {
+                    b.Navigation("TokenBase")
                         .IsRequired();
                 });
 

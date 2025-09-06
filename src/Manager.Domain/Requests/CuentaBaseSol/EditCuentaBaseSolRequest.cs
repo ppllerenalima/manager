@@ -5,6 +5,7 @@ namespace Manager.Domain.Requests.CuentaBaseSol
         public Guid Id { get; set; }
         public bool IsInactive { get; set; } = false;
 
+        public string Ruc { get; set; }
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
         public string Username { get; set; }

@@ -1,6 +1,5 @@
 ﻿using Manager.Domain.Requests.Cpe;
 using Manager.Domain.Responses.CpeResponses;
-using Manager.Domain.Services;
 
 namespace Manager.API.Controllers
 {
@@ -10,11 +9,16 @@ namespace Manager.API.Controllers
     {
         private readonly ICpeService _cpeService;
         private readonly ITokenService _tokenService;
+        private readonly ITokenBaseService _tokenBaseService;
+        private readonly ICuentaBaseSolService _cuentaBaseSolService;
 
-        public CpeController(ICpeService cpeService, ITokenService tokenService)
+
+        public CpeController(ICpeService cpeService, ITokenService tokenService, ITokenBaseService tokenBaseService, ICuentaBaseSolService cuentaBaseSolService)
         {
             _cpeService = cpeService;
             _tokenService = tokenService;
+            _tokenBaseService = tokenBaseService;
+            _cuentaBaseSolService = cuentaBaseSolService;
         }
 
         [HttpPost("status-cdr")]
@@ -55,8 +59,10 @@ namespace Manager.API.Controllers
         [HttpPost("consultacpe-unificado")]
         public async Task<IActionResult> ConsultaCpeUnificado([FromBody] ConsultaCpeRequest request)
         {
+            var cuentaBaseSol = await _cuentaBaseSolService.GetCuentaBaseSolFirstOrDefaultAsync();
+
             // 1. Obtener token válido
-            var token = await _tokenService.GetOrGenerateActiveTokenAsync(request.clienteId);
+            var token = await _tokenBaseService.GetOrGenerateActiveTokenBaseAsync(cuentaBaseSol.Id);
 
             // 1️⃣ Primer intento: ControlCpeConsultaXml
             var respXml = await _cpeService.ControlCpeConsultaXmlAsync(token.AccessToken, new ConsultaCpeComprobanteRequest

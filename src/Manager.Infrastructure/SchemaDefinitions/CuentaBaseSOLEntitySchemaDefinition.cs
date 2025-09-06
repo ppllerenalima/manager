@@ -26,6 +26,12 @@
 
             builder.Property(c => c.IsInactive)
                 .HasDefaultValue(true);
+
+            // Relación 1:1 Cliente → Token
+            builder
+                .HasOne(c => c.TokenBase)
+                .WithOne(t => t.CuentaBaseSol)
+                .HasForeignKey<TokenBase>(t => t.CuentaBaseSolId);
         }
     }
 }

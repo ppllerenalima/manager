@@ -27,6 +27,16 @@ namespace Manager.Domain.Services
                 .Select(x => _cuentaBaseSolMapper.Map<CuentaBaseSolResponse>(x));
         }
 
+        public async Task<CuentaBaseSolResponse> GetCuentaBaseSolFirstOrDefaultAsync()
+        {
+            var entity = await _cuentaBaseSolRepository.GetFirstOrDefaultAsync();
+
+            _logger.LogInformation(Logging.Events.GetById, Messages.TargetEntityChanged_id, entity?.Id);
+
+            return _cuentaBaseSolMapper.Map<CuentaBaseSolResponse>(entity);
+        }
+
+
         public async Task<CuentaBaseSolResponse> GetCuentaBaseSolAsync(GetCuentaBaseSolRequest request)
         {
             if (request?.Id == null) throw new ArgumentNullException();

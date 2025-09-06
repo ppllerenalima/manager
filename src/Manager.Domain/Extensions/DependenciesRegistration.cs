@@ -35,6 +35,7 @@ namespace Manager.Domain.Extensions
                 .AddScoped<IRoleService, RoleService>()
                 .AddScoped<IPersonaService, PersonaService>()
                 .AddScoped<ITicketService, TicketService>()
+                .AddScoped<ITokenBaseService, TokenBaseService>()
                 .AddScoped<ITokenService, TokenService>()
                 .AddScoped<IUserService, UserService>();
 

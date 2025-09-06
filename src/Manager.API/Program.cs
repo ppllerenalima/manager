@@ -20,6 +20,7 @@ builder.Services
     .AddScoped<IPersonaRepository, PersonaRepository>()
     .AddScoped<IRoleRepository, RoleRepository>()
     .AddScoped<ITicketRepository, TicketRepository>()
+    .AddScoped<ITokenBaseRepository, TokenBaseRepository>()
     .AddScoped<ITokenRepository, TokenRepository>()
     .AddScoped<IUserRepository, UserRepository>()
 

@@ -46,6 +46,10 @@
             CreateMap<AddTicketRequest, Ticket>().ReverseMap();
             CreateMap<EditTicketRequest, Ticket>().ReverseMap();
 
+            CreateMap<TokenBaseResponse, TokenBase>().ReverseMap();
+            CreateMap<AddTokenBaseRequest, TokenBase>().ReverseMap();
+            CreateMap<EditTokenBaseRequest, TokenBase>().ReverseMap();
+
             CreateMap<TokenResponse, Token>().ReverseMap();
             CreateMap<AddTokenRequest, Token>().ReverseMap();
             CreateMap<EditTokenRequest, Token>().ReverseMap();

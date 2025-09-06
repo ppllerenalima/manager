@@ -19,7 +19,9 @@
         public DbSet<Role> Roles { get; set; }
         public DbSet<Persona> Personas { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TokenBase> TokenBases { get; set; }
         public DbSet<Token> Tokens { get; set; }
+
         public DbSet<User> Users { get; set; }
         //public DbSet<UserRole> UserRoles { get; set; }
 
