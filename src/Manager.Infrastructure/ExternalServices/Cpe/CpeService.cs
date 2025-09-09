@@ -59,7 +59,6 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
             return responseResult;
         }
 
-
         public async Task<ConsultaCpeUnificadoResponse> ConsultaCpeComprobanteAsync(string token, ConsultaCpeComprobanteRequest request)
         {
             var responseResult = new ConsultaCpeUnificadoResponse();
