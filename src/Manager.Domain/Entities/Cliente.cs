@@ -18,5 +18,8 @@
 
         public Guid GrupoId { get; set; }
         public Grupo Grupo { get; set; }
+
+        // 🔹 Relación inversa
+        public ICollection<PerTributario> PeriodosTributarios { get; set; } = new List<PerTributario>();
     }
 }

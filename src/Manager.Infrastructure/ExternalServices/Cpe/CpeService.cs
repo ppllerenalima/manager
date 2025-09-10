@@ -76,7 +76,7 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var resultado = JsonSerializer.Deserialize<ConsultaCpeComprobanteResponse>(json, new JsonSerializerOptions
+                    var resultado = System.Text.Json.JsonSerializer.Deserialize<ConsultaCpeComprobanteResponse>(json, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });

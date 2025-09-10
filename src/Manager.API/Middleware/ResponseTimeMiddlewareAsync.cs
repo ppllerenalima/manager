@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Manager.API.Middleware
 {
     public class ResponseTimeMiddlewareAsync

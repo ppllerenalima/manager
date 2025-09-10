@@ -9,6 +9,7 @@ namespace Manager.Domain.Requests.Sire.Compras
     public class ArchivoReporteRequest
     {
         public Guid clienteId { get; set; }
-        public string perTributario { get; set; }
+        public int anio { get; set; }
+        public int mes { get; set; }
     }
 }

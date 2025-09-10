@@ -1,4 +1,6 @@
-﻿using Manager.Domain.Requests.Cliente;
+﻿using Manager.Domain.Entities.Enum;
+using Manager.Domain.Requests.Cliente;
+using Manager.Domain.Requests.PerTributario;
 using Manager.Domain.Requests.Sire.Compras;
 using Manager.Domain.Requests.Ticket;
 using Manager.Domain.Responses;
@@ -15,14 +17,15 @@ namespace Manager.API.Controllers
         private readonly IClienteService _clienteSunatService;
         private readonly ITokenService _tokenService;
         private readonly ITicketService _ticketService;
+        private readonly IPerTributarioService _perTributarioService;
 
-
-        public SireComprasController(ISireComprasService sireComprasService, IClienteService clienteSunatService, ITokenService tokenService, ITicketService ticketService)
+        public SireComprasController(ISireComprasService sireComprasService, IClienteService clienteSunatService, ITokenService tokenService, ITicketService ticketService, IPerTributarioService perTributarioService)
         {
             _sireComprasService = sireComprasService;
             _clienteSunatService = clienteSunatService;
             _tokenService = tokenService;
             _ticketService = ticketService;
+            _perTributarioService = perTributarioService;
         }
 
         [HttpGet("{Id:Guid}/token")]
@@ -95,7 +98,7 @@ namespace Manager.API.Controllers
                     new GetTicketRequest
                     {
                         clienteId = request.clienteId,
-                        perTributario = request.perTributario
+                        perTributario = $"{request.anio}{request.mes:D2}"
                     });
 
                 // 3. Validar estado del ticket
@@ -124,17 +127,19 @@ namespace Manager.API.Controllers
                             new GetTicketRequest
                             {
                                 clienteId = request.clienteId,
-                                perTributario = request.perTributario
+                                perTributario = $"{request.anio}{request.mes:D2}"
                             }, true);
 
                         if (nuevoTicket.CodEstadoEnvio != "06")
                             return StatusCode(202, $"Nuevo ticket {nuevoTicket.NumTicket} aún no aceptado. Estado: {nuevoTicket.CodEstadoEnvio}");
 
                         // 🔹 Reintentar descarga con el nuevo ticket
-                        var archivoResponse2 = await DescargarArchivoReporteSunat(token.AccessToken, request, nuevoTicket);
-                        if (archivoResponse2?.EsExito == true)
+                        var archivoResponse_retry = await DescargarArchivoReporteSunat(token.AccessToken, request, nuevoTicket);
+                        if (archivoResponse_retry?.EsExito == true)
                         {
-                            return File(archivoResponse2.Archivo, "application/zip", archivoResponse2.NombreArchivo ?? "archivo.zip");
+                           
+
+                            return File(archivoResponse_retry.Archivo, "application/zip", archivoResponse_retry.NombreArchivo ?? "archivo.zip");
                         }
                     }
                 }
@@ -158,21 +163,40 @@ namespace Manager.API.Controllers
             }
         }
 
-        private async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteSunat(
-            string accessToken,
-            ArchivoReporteRequest request,
-            TicketResponse ticket)
+        private async Task<BaseResponse> DescargarArchivoReporteSunat(string accessToken, ArchivoReporteRequest request, TicketResponse ticket)
         {
-            return await _sireComprasService.DescargarArchivoReporteAsync(
+            var response = new BaseResponse();
+
+            var resultDescarga = await _sireComprasService.DescargarArchivoReporteAsync(
                 accessToken,
                 new DescargarArchivoReporteRequest
                 {
-                    PerTributario = request.perTributario,
+                    PerTributario = $"{request.anio}{request.mes:D2}",
                     NomArchivoReporte = ticket.NomArchivoReporte,
                     CodTipoArchivoReporte = ticket.CodTipoAchivoReporte,
                     NumTicket = ticket.NumTicket,
                     CodProceso = ticket.CodProceso
                 });
+
+            response.Success = resultDescarga.EsExito;
+            if (!resultDescarga.EsExito && resultDescarga.Errores.Any())
+            {
+                response.ErrorMessage = string.Join(" | ", resultDescarga.Errores.Select(e => $"{e.status}: {e.message}"));
+            }
+
+            if (resultDescarga?.EsExito == true)
+            {
+                var resultPerTributario = await _perTributarioService.AddPerTributarioAsync(new AddPerTributarioRequest
+                {
+                    ClienteId = request.clienteId,
+                    anio = request.anio,
+                    mes = request.mes,
+                    TipoComprobante = TipoComprobanteEnum.Compra,
+                    archivoZip = resultDescarga.Archivo
+                });
+            }
+
+            return response;
         }
     }
 }

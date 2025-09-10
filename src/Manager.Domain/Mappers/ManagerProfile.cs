@@ -1,4 +1,7 @@
-﻿namespace Manager.Domain.Mappers
+﻿using Manager.Domain.Requests.PerTributario;
+using Manager.Domain.Responses.PerTributarioResponses;
+
+namespace Manager.Domain.Mappers
 {
     public class ManagerProfile : Profile
     {
@@ -17,6 +20,10 @@
             CreateMap<GrupoResponse, Grupo>().ReverseMap();
             CreateMap<AddGrupoRequest, Grupo>().ReverseMap();
             CreateMap<EditGrupoRequest, Grupo>().ReverseMap();
+
+            CreateMap<PerTributarioResponse, PerTributario>().ReverseMap();
+            CreateMap<AddPerTributarioRequest, PerTributario>().ReverseMap();
+            CreateMap<EditPerTributarioRequest, PerTributario>().ReverseMap();
 
             CreateMap<User, UserResponse>()
                 .ForMember(dest => dest.ApePaterno, opt => opt.MapFrom(src => src.Persona.ApePaterno))

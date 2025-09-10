@@ -1,22 +1,16 @@
-﻿using Manager.Domain.Requests.Sire.Compras;
-using Manager.Domain.Responses;
-using Manager.Domain.Services;
-using Newtonsoft.Json;
-using System.Globalization;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
+﻿
 
 namespace Manager.Infrastructure.ExternalServices.Sire
 {
     public class SireComprasService : ISireComprasService
     {
         private readonly HttpClient _httpClient;
+        private readonly IZipFileParser _zipFileParser;
 
-        public SireComprasService(HttpClient httpClient)
+        public SireComprasService(HttpClient httpClient, IZipFileParser zipFileParser)
         {
             _httpClient = httpClient;
+            _zipFileParser = zipFileParser;
         }
 
         public async Task<SunatAuthResponse> AccessTokenAsync(SunatAuthRequest request)
