@@ -67,7 +67,7 @@ builder.Services.AddCors(options =>
         {
             builder
             .WithOrigins(
-                    "http://localhost:26949",   // Angular en desarrollo
+                    "http://localhost:4200",   // Angular en desarrollo
                     "http://localhost:8080",   // Angular publicado en IIS
                     "http://misire.com"        // dominio real si lo usas
                 )

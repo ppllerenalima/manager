@@ -5,8 +5,8 @@ namespace Manager.Domain.Responses.PerTributarioResponses
         public Guid Id { get; set; }
         public bool IsInactive { get; set; }
 
-        public int mes { get; set; }
-        public int anio { get; set; }
+        public int Mes { get; set; }
+        public int Anio { get; set; }
         public Guid ClienteId { get; set; }
     }
 }

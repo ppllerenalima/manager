@@ -1,4 +1,4 @@
-using Manager.Domain.Repositories;
+﻿using Manager.Domain.Repositories;
 using System.Data.SqlTypes;
 using System.Threading;
 
@@ -45,9 +45,32 @@ namespace Manager.Domain.Services
             return _perTributarioMapper.Map<PerTributarioResponse>(entity);
         }
 
+        public async Task<PerTributarioResponse> GetPerTributarioAsync(GetPerTributarioByPeriodoRequest request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            var entity = await _perTributarioRepository.GetByPredicateAsync(
+                predicate: z => z.anio == request.Anio
+                && z.mes == request.Mes
+                && z.ClienteId == request.ClienteId);
+
+            if (entity == null)
+            {
+                _logger.LogWarning("📌 No se encontró PerTributario para Cliente {ClienteId}, Año {Anio}, Mes {Mes}",
+                    request.ClienteId, request.Anio, request.Mes);
+
+                return null; // o lanzar una excepción controlada
+            }
+
+            _logger.LogInformation("✅ PerTributario encontrado: {PerTributarioId}", entity.Id);
+
+            return _perTributarioMapper.Map<PerTributarioResponse>(entity);
+        }
+
         public async Task<PerTributarioResponse> AddPerTributarioAsync(AddPerTributarioRequest request, CancellationToken cancellationToken)
         {
-            // iniciamos una transacci�n en el UnitOfWork
+            // iniciamos una transacción en el UnitOfWork
             using var transaction = await _perTributarioRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
@@ -63,14 +86,14 @@ namespace Manager.Domain.Services
                 // 3. Guardar cambios en la BD (todos juntos)
                 await _perTributarioRepository.UnitOfWork.SaveChangesAsync(cancellationToken);
 
-                // 4. Confirmar transacci�n
+                // 4. Confirmar transacción
                 await transaction.CommitAsync(cancellationToken);
 
                 return _perTributarioMapper.Map<PerTributarioResponse>(resultPerTributario);
             }
             catch
             {
-                // si ocurre cualquier excepci�n, revertimos todo
+                // si ocurre cualquier excepción, revertimos todo
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
@@ -123,7 +146,7 @@ namespace Manager.Domain.Services
                 TipoNota = campos.ElementAtOrDefault(38),
                 EstadoComprobante = campos.ElementAtOrDefault(39),
                 Incal = campos.ElementAtOrDefault(40),
-                Clus = campos.Skip(41).ToList(), // todos los CLU desde la posici�n 41
+                Clus = campos.Skip(41).ToList(), // todos los CLU desde la posición 41
 
                 PerTributarioId = Id
             }).ToList();
