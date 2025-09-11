@@ -1,5 +1,7 @@
 ﻿#region Configuración de Servicios
 
+using Manager.Infrastructure.FileProcessing;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 🔐 CORS
@@ -15,15 +17,17 @@ builder.Services
 
     // REPOSITORIOS
     .AddScoped<IClienteRepository, ClienteRepository>()
+    .AddScoped<IComprobanteRepository, ComprobanteRepository>()
     .AddScoped<ICuentaBaseSolRepository, CuentaBaseSolRepository>()
     .AddScoped<IGrupoRepository, GrupoRepository>()
     .AddScoped<IPersonaRepository, PersonaRepository>()
+    .AddScoped<IPerTributarioRepository, PerTributarioRepository>()
     .AddScoped<IRoleRepository, RoleRepository>()
     .AddScoped<ITicketRepository, TicketRepository>()
     .AddScoped<ITokenBaseRepository, TokenBaseRepository>()
     .AddScoped<ITokenRepository, TokenRepository>()
     .AddScoped<IUserRepository, UserRepository>()
-
+    .AddScoped<IZipFileParser, ZipFileParser>()
     // MAPEADORES Y LÓGICA DE NEGOCIO
     .AddMappers()
     .AddServices()

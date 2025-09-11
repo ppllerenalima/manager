@@ -1,4 +1,5 @@
 ﻿using Manager.Domain.Requests.PerTributario;
+using Manager.Domain.Responses.ComprobanteResponses;
 using Manager.Domain.Responses.PerTributarioResponses;
 
 namespace Manager.Domain.Mappers
@@ -12,6 +13,8 @@ namespace Manager.Domain.Mappers
                 .ReverseMap();
             CreateMap<AddClienteRequest, Cliente>().ReverseMap();
             CreateMap<EditClienteRequest, Cliente>().ReverseMap();
+
+            CreateMap<ComprobanteResponse, Comprobante>().ReverseMap();
 
             CreateMap<CuentaBaseSolResponse, CuentaBaseSOL>().ReverseMap();
             CreateMap<AddCuentaBaseSolRequest, CuentaBaseSOL>().ReverseMap();

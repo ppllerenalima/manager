@@ -13,11 +13,11 @@ namespace Manager.Domain.Services
         private readonly ILogger<PerTributarioService> _logger;
         private readonly IZipFileParser _zipFileParser;
 
-        //public PerTributarioService(IPerTributarioRepository perTributarioRepository, IMapper perTributarioMapper)
-        //{
-        //    _perTributarioRepository = perTributarioRepository;
-        //    _perTributarioMapper = perTributarioMapper;
-        //}
+        public PerTributarioService(IPerTributarioRepository perTributarioRepository, IMapper perTributarioMapper)
+        {
+            _perTributarioRepository = perTributarioRepository;
+            _perTributarioMapper = perTributarioMapper;
+        }
 
         public PerTributarioService(IPerTributarioRepository perTributarioRepository, IComprobanteRepository comprobanteRepository, IMapper perTributarioMapper, ILogger<PerTributarioService> logger, IZipFileParser zipFileParser)
         {
@@ -52,25 +52,28 @@ namespace Manager.Domain.Services
 
             try
             {
+                // 1. Crear PerTributario
                 var perTributario = _perTributarioMapper.Map<PerTributario>(request);
-
                 var resultPerTributario = await _perTributarioRepository.AddAsync(perTributario, cancellationToken);
 
-                var comprobantes = await ProcesarZipAsync(request.archivo, resultPerTributario.Id);
+                // 2. Procesar comprobantes
+                var comprobantes = await ProcesarZipAsync(request.archivoZip, resultPerTributario.Id);
+                await _comprobanteRepository.AddAsync(comprobantes, cancellationToken);
 
-                var resulttComprobante = await _comprobanteRepository.AddAsync(comprobantes, cancellationToken);
+                // 3. Guardar cambios en la BD (todos juntos)
+                await _perTributarioRepository.UnitOfWork.SaveChangesAsync(cancellationToken);
 
+                // 4. Confirmar transacción
                 await transaction.CommitAsync(cancellationToken);
 
                 return _perTributarioMapper.Map<PerTributarioResponse>(resultPerTributario);
             }
-            catch (Exception)
+            catch
             {
                 // si ocurre cualquier excepción, revertimos todo
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
-            
         }
 
         private async Task<ICollection<Comprobante>> ProcesarZipAsync(byte[] archivoZip, Guid Id)

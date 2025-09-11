@@ -16,6 +16,7 @@ global using Manager.Domain.Requests.Token;
 global using Manager.Domain.Requests.TokenBase;
 global using Manager.Domain.Requests.User;
 global using Manager.Domain.Responses;
+global using Manager.Domain.Responses.ComprobanteResponses;
 global using Manager.Domain.Responses.CuentaBaseSolResponses;
 global using Manager.Domain.Responses.GrupoResponses;
 global using Manager.Domain.Responses.PersonaResponses;

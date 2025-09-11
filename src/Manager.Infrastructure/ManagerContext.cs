@@ -14,10 +14,12 @@
         public const string DEFAULT_SCHEMA = "manager";
 
         public DbSet<Cliente> Clientes { get; set; }
+        public DbSet<Comprobante> Comprobantes { get; set; }
         public DbSet<CuentaBaseSOL> CuentaBaseSOL { get; set; }
         public DbSet<Grupo> Grupos { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Persona> Personas { get; set; }
+        public DbSet<PerTributario> PerTributarios { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<TokenBase> TokenBases { get; set; }
         public DbSet<Token> Tokens { get; set; }
