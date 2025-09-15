@@ -2,7 +2,7 @@ using Manager.API.Filters;
 using Manager.API.ResponseModels;
 using Manager.Domain.Requests.Cliente;
 using Manager.Domain.Responses;
-using Manager.Domain.Services;
+using Manager.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Manager.API.Controllers

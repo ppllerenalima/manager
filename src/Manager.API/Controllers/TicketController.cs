@@ -1,13 +1,5 @@
-﻿using Azure.Core;
-using Manager.API.Filters;
-using Manager.Domain.Requests.Cliente;
-using Manager.Domain.Requests.Sire.Compras;
-using Manager.Domain.Requests.Ticket;
-using Manager.Domain.Responses;
-using Manager.Domain.Responses.TicketResponses;
-using Manager.Domain.Services;
-using Microsoft.AspNetCore.Mvc;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using Manager.Domain.Requests.Ticket;
+using Manager.Domain.Services.Interfaces;
 
 namespace Manager.API.Controllers
 {
@@ -57,7 +49,7 @@ namespace Manager.API.Controllers
         //        PerPage = request.PerPage,
         //        NumTicket = ticket.NumTicket
         //    });
-            
+
         //    if (estadoTicket == null || !estadoTicket.EsExito || estadoTicket.Result == null || estadoTicket.Result.Registros == null || !estadoTicket.Result.Registros.Any())
         //    {
         //        var mensajeError = estadoTicket?.Errores != null && estadoTicket.Errores.Any()

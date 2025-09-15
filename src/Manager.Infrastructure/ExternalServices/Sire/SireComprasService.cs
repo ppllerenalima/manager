@@ -1,5 +1,7 @@
 ﻿
 
+using Manager.Domain.Services.Interfaces;
+
 namespace Manager.Infrastructure.ExternalServices.Sire
 {
     public class SireComprasService : ISireComprasService

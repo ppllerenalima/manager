@@ -1,4 +1,5 @@
 ﻿using Manager.API.RequestModels;
+using Manager.Domain.Services.Interfaces;
 
 namespace Manager.API.Controllers
 {

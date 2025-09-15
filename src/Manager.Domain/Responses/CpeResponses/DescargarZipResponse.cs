@@ -1,6 +1,6 @@
 ﻿namespace Manager.Domain.Responses.CpeResponses
 {
-    public class ConsultaCpeUnificadoResponse
+    public class DescargarZipResponse
     {
         public bool EsExito { get; set; }
         public int StatusCode { get; set; }
@@ -10,9 +10,9 @@
         public string NombreArchivo { get; set; }
 
         // Errores unificados
-        public List<ErrorConsultaCpeResponse> Errores { get; set; } = new List<ErrorConsultaCpeResponse>();
+        public List<ErrorDescargarZipResponse> Errores { get; set; } = new List<ErrorDescargarZipResponse>();
     }
-    public class ErrorConsultaCpeResponse
+    public class ErrorDescargarZipResponse
     {
         public string status { get; set; }
         public string message { get; set; }

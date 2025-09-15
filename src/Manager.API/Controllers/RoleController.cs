@@ -1,4 +1,5 @@
 ﻿using Manager.Domain.Requests.Role;
+using Manager.Domain.Services.Interfaces;
 
 namespace Manager.API.Controllers
 {

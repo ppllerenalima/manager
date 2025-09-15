@@ -1,7 +1,7 @@
 using Manager.Domain.Requests.Token;
 using Manager.Domain.Responses.TokenResponses;
 
-namespace Manager.Domain.Services
+namespace Manager.Domain.Services.Interfaces
 {
     public interface ITokenService
     {

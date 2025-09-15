@@ -1,12 +1,9 @@
 ﻿using Manager.Domain.Entities.Enum;
-using Manager.Domain.Requests.Cliente;
-using Manager.Domain.Requests.PerTributario;
-using Manager.Domain.Requests.Sire.Compras;
 using Manager.Domain.Requests.Ticket;
-using Manager.Domain.Responses;
 using Manager.Domain.Responses.ErroresResponses;
 using Manager.Domain.Responses.PerTributarioResponses;
 using Manager.Domain.Responses.TicketResponses;
+using Manager.Domain.Services.Interfaces;
 
 namespace Manager.API.Controllers
 {
@@ -86,7 +83,7 @@ namespace Manager.API.Controllers
         }
 
         [HttpPost("importar-comprobantes")]
-        public async Task<IActionResult> ImportarComprobantesDesdeSunatAsync([FromBody] ArchivoReporteRequest request)
+        public async Task<IActionResult> ImportarComprobantesDesdeSunatAsync([FromBody] GetPerTributarioByPeriodoRequest request)
         {
             try
             {
@@ -163,7 +160,7 @@ namespace Manager.API.Controllers
             }
         }
 
-        private async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteSunat(string accessToken, ArchivoReporteRequest request, TicketResponse ticket)
+        private async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteSunat(string accessToken, GetPerTributarioByPeriodoRequest request, TicketResponse ticket)
         {
             return await _sireComprasService.DescargarArchivoReporteAsync(
                 accessToken,
@@ -178,7 +175,7 @@ namespace Manager.API.Controllers
         }
 
         // 🔹 Método auxiliar para guardar en BD
-        private async Task<PerTributarioResponse> GuardarPerTributarioAsync(ArchivoReporteRequest request, byte[] archivoZip)
+        private async Task<PerTributarioResponse> GuardarPerTributarioAsync(GetPerTributarioByPeriodoRequest request, byte[] archivoZip)
         {
             return await _perTributarioService.AddPerTributarioAsync(new AddPerTributarioRequest
             {

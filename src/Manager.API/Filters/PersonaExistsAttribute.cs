@@ -1,4 +1,6 @@
-﻿namespace Manager.API.Filters
+﻿using Manager.Domain.Services.Interfaces;
+
+namespace Manager.API.Filters
 {
     public class PersonaExistsAttribute : TypeFilterAttribute
     {

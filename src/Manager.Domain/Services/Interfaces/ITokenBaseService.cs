@@ -1,4 +1,4 @@
-namespace Manager.Domain.Services
+namespace Manager.Domain.Services.Interfaces
 {
     public interface ITokenBaseService
     {

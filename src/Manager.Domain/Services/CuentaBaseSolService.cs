@@ -1,3 +1,5 @@
+using Manager.Domain.Services.Interfaces;
+
 namespace Manager.Domain.Services
 {
     public class CuentaBaseSolService : ICuentaBaseSolService

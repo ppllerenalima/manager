@@ -1,7 +1,7 @@
 using Manager.Domain.Requests.Sire.Compras;
 using Manager.Domain.Responses;
 
-namespace Manager.Domain.Services
+namespace Manager.Domain.Services.Interfaces
 {
     public interface ISireComprasService
     {

@@ -1,4 +1,6 @@
-﻿namespace Manager.API.Controllers
+﻿using Manager.Domain.Services.Interfaces;
+
+namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

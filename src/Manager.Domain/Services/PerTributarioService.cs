@@ -1,6 +1,4 @@
-﻿using Manager.Domain.Repositories;
-using System.Data.SqlTypes;
-using System.Threading;
+﻿using Manager.Domain.Services.Interfaces;
 
 namespace Manager.Domain.Services
 {
@@ -45,7 +43,7 @@ namespace Manager.Domain.Services
             return _perTributarioMapper.Map<PerTributarioResponse>(entity);
         }
 
-        public async Task<PerTributarioResponse> GetPerTributarioAsync(GetPerTributarioByPeriodoRequest request)
+        public async Task<PerTributarioResponse> GetPerTributarioByPeriodoAsync(GetPerTributarioByPeriodoRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));

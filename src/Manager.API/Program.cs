@@ -1,6 +1,7 @@
 ﻿#region Configuración de Servicios
 
-using Manager.Infrastructure.FileProcessing;
+using Manager.Domain.Services.Interfaces;
+using Manager.Infrastructure.FileAdapters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,10 @@ builder.Services
     .AddScoped<ITokenBaseRepository, TokenBaseRepository>()
     .AddScoped<ITokenRepository, TokenRepository>()
     .AddScoped<IUserRepository, UserRepository>()
+
     .AddScoped<IZipFileParser, ZipFileParser>()
+    .AddScoped<IZipReader, ZipReader>()
+
     // MAPEADORES Y LÓGICA DE NEGOCIO
     .AddMappers()
     .AddServices()

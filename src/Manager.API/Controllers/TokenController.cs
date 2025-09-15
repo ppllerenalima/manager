@@ -3,7 +3,7 @@ using Manager.API.Filters;
 using Manager.Domain.Requests.Cliente;
 using Manager.Domain.Requests.Sire.Compras;
 using Manager.Domain.Requests.Token;
-using Manager.Domain.Services;
+using Manager.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Manager.API.Controllers

@@ -44,5 +44,8 @@
         public string EstadoComprobante { get; set; }
         public string Incal { get; set; }
         public List<string> Clus { get; set; } = new();
+        public bool TieneGlosa { get; set; }
+        public string Glosa { get; set; }
+
     }
 }

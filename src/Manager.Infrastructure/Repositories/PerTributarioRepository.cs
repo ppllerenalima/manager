@@ -6,11 +6,12 @@
         {
         }
 
-        public async Task<PerTributario> GetByPredicateAsync(Expression<Func<PerTributario, bool>> predicate, CancellationToken cancellationToken)
+        public async Task<PerTributario?> GetByPredicateAsync(Expression<Func<PerTributario, bool>> predicate, CancellationToken cancellationToken = default)
         {
             return await _context.Set<PerTributario>()
                 .AsNoTracking()
-                .FirstAsync(predicate, cancellationToken);
+                .FirstOrDefaultAsync(predicate, cancellationToken);
         }
+
     }
 }

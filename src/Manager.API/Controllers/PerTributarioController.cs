@@ -1,4 +1,6 @@
-﻿namespace Manager.API.Controllers
+﻿using Manager.Domain.Services.Interfaces;
+
+namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -22,7 +24,7 @@
         [HttpGet("buscar")]
         public async Task<IActionResult> GetByPeriodo([FromQuery] GetPerTributarioByPeriodoRequest request)
         {
-            var result = await _perTributarioService.GetPerTributarioAsync(request);
+            var result = await _perTributarioService.GetPerTributarioByPeriodoAsync(request);
             return Ok(result);
         }
     }

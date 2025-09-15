@@ -1,4 +1,4 @@
-﻿namespace Manager.Infrastructure.FileProcessing
+﻿namespace Manager.Infrastructure.FileAdapters
 {
     public class ZipFileParser : IZipFileParser
     {

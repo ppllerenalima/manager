@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Manager.Domain.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace Manager.Domain.Services
 {

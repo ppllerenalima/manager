@@ -1,4 +1,4 @@
-﻿using Manager.Domain.Services;
+﻿using Manager.Domain.Services.Interfaces;
 using Manager.Infrastructure.ExternalServices.Cpe;
 using Manager.Infrastructure.ExternalServices.Sire;
 using Microsoft.Extensions.DependencyInjection;

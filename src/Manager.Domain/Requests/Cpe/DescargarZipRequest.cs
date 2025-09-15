@@ -1,8 +1,7 @@
 ﻿namespace Manager.Domain.Requests.Cpe
 {
-    public class ConsultaCpeComprobanteRequest
+    public class DescargarZipRequest
     {
-
         public string RucEmisor { get; set; }
         public string TipoComprobante { get; set; }
         public string Serie { get; set; }

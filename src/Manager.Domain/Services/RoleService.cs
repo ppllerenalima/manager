@@ -1,4 +1,6 @@
-﻿namespace Manager.Domain.Services
+﻿using Manager.Domain.Services.Interfaces;
+
+namespace Manager.Domain.Services
 {
     public class RoleService : IRoleService
     {

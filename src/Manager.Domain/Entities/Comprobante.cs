@@ -45,6 +45,9 @@
         public string Incal { get; set; }
         public List<string> Clus { get; set; } = new();
 
+        public bool TieneGlosa { get; set; }
+        public string? Glosa { get; set; }
+
         // 🔹 Relación con PerTributario
         public Guid PerTributarioId { get; set; }
         public PerTributario PerTributario { get; set; }

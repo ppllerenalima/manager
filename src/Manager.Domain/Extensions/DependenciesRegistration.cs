@@ -1,5 +1,6 @@
 using FluentValidation.AspNetCore;
 using Manager.Domain.Services;
+using Manager.Domain.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -39,7 +40,9 @@ namespace Manager.Domain.Extensions
                 .AddScoped<ITicketService, TicketService>()
                 .AddScoped<ITokenBaseService, TokenBaseService>()
                 .AddScoped<ITokenService, TokenService>()
-                .AddScoped<IUserService, UserService>();
+                .AddScoped<IUserService, UserService>()
+                .AddScoped<IXmlInvoiceParserService, XmlInvoiceParserService>();
+
 
             return services;
         }

@@ -1,5 +1,6 @@
 ﻿using Manager.API.RequestModels;
 using Manager.Domain.Responses.CuentaBaseSolResponses;
+using Manager.Domain.Services.Interfaces;
 
 namespace Manager.API.Controllers
 {

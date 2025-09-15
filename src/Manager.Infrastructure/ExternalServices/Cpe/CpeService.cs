@@ -1,10 +1,4 @@
-﻿using BillConsultServiceClient;
-using Manager.Domain.Requests.Cpe;
-using Manager.Domain.Responses.CpeResponses;
-using Manager.Domain.Services;
-using System.Net.Http.Headers;
-using System.ServiceModel;
-using System.Text.Json;
+﻿using Manager.Domain.Services.Interfaces;
 
 namespace Manager.Infrastructure.ExternalServices.Cpe
 {
@@ -19,9 +13,30 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
             _httpClient.BaseAddress = new Uri(BaseUrl);
         }
 
-        public async Task<ConsultaCpeUnificadoResponse> ControlCpeConsultaXmlAsync(string token, ConsultaCpeComprobanteRequest request)
+        public async Task<DescargarZipResponse> DescargarZipAsync(string token, DescargarZipRequest request)
         {
-            var responseResult = new ConsultaCpeUnificadoResponse();
+            // 1. Intentar con ControlCpe
+            var resultado = await DescargarPorControlCpeAsync(token, request);
+
+            if (resultado.EsExito)
+                return resultado;
+
+            // 2. Si falló, intentar con ConsultaCpe
+            var fallback = await DescargarPorConsultaCpeAsync(token, request);
+
+            // 3. Si ambos fallan → devolver error combinado
+            if (!fallback.EsExito)
+            {
+                fallback.Errores.AddRange(resultado.Errores);
+            }
+
+            return fallback;
+        }
+
+        #region PRIVADOS
+        private async Task<DescargarZipResponse> DescargarPorControlCpeAsync(string token, DescargarZipRequest request)
+        {
+            var responseResult = new DescargarZipResponse();
             var url = $"v1/contribuyente/controlcpe/consultaxml/{request.RucEmisor}-{request.TipoComprobante}-{request.Serie}-{request.Numero}";
 
             try
@@ -42,14 +57,14 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
                     responseResult.EsExito = false;
-                    responseResult.Errores.AddRange(ProcesarErrorControl(errorContent));
+                    //responseResult.Errores.AddRange(ProcesarErrorControl(errorContent));
                 }
             }
             catch (Exception ex)
             {
                 responseResult.EsExito = false;
                 responseResult.StatusCode = 500;
-                responseResult.Errores.Add(new ErrorConsultaCpeResponse
+                responseResult.Errores.Add(new ErrorDescargarZipResponse
                 {
                     status = "EX",
                     message = ex.Message
@@ -59,9 +74,9 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
             return responseResult;
         }
 
-        public async Task<ConsultaCpeUnificadoResponse> ConsultaCpeComprobanteAsync(string token, ConsultaCpeComprobanteRequest request)
+        private async Task<DescargarZipResponse> DescargarPorConsultaCpeAsync(string token, DescargarZipRequest request)
         {
-            var responseResult = new ConsultaCpeUnificadoResponse();
+            var responseResult = new DescargarZipResponse();
             var url = $"v1/contribuyente/consultacpe/comprobantes/{request.RucEmisor}-{request.TipoComprobante}-{request.Serie}-{request.Numero}-3/{request.Tipo}";
 
             try
@@ -95,7 +110,7 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
             {
                 responseResult.EsExito = false;
                 responseResult.StatusCode = 500;
-                responseResult.Errores.Add(new ErrorConsultaCpeResponse
+                responseResult.Errores.Add(new ErrorDescargarZipResponse
                 {
                     status = "EX",
                     message = ex.Message
@@ -105,16 +120,16 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
             return responseResult;
         }
 
-        private List<ErrorConsultaCpeResponse> ProcesarErrorControl(string json)
+        private List<ErrorDescargarZipResponse> ProcesarErrorControl(string json)
         {
-            var errores = new List<ErrorConsultaCpeResponse>();
+            var errores = new List<ErrorDescargarZipResponse>();
 
             try
             {
                 // 1️⃣ Si es HTML (probable 504)
                 if (json.TrimStart().StartsWith("<"))
                 {
-                    errores.Add(new ErrorConsultaCpeResponse
+                    errores.Add(new ErrorDescargarZipResponse
                     {
                         status = "SUNAT_504",
                         message = "504 Gateway Time-out: La SUNAT no respondió a tiempo."
@@ -135,7 +150,7 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
                     {
                         foreach (var err in errorsArray.EnumerateArray())
                         {
-                            errores.Add(new ErrorConsultaCpeResponse
+                            errores.Add(new ErrorDescargarZipResponse
                             {
                                 status = $"SUNAT_{codigo}_{err.GetProperty("codError").GetString()}",
                                 message = err.GetProperty("desError").GetString()
@@ -144,7 +159,7 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
                     }
                     else
                     {
-                        errores.Add(new ErrorConsultaCpeResponse
+                        errores.Add(new ErrorDescargarZipResponse
                         {
                             status = $"SUNAT_{codigo}",
                             message = mensajePrincipal
@@ -157,7 +172,7 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
                 // Estructura 500 con "code" y "message"
                 if (doc.RootElement.TryGetProperty("code", out var code500))
                 {
-                    errores.Add(new ErrorConsultaCpeResponse
+                    errores.Add(new ErrorDescargarZipResponse
                     {
                         status = $"SUNAT_{code500.GetInt32()}",
                         message = doc.RootElement.GetProperty("message").GetString()
@@ -171,7 +186,7 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
             }
 
             // 3️⃣ Fallback: respuesta desconocida
-            errores.Add(new ErrorConsultaCpeResponse
+            errores.Add(new ErrorDescargarZipResponse
             {
                 status = "SUNAT_ERROR",
                 message = json.Length > 500 ? json.Substring(0, 500) + "..." : json
@@ -179,54 +194,128 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
 
             return errores;
         }
+        #endregion
 
-        public async Task<StatusResponse> StatusCdrAsync(ConsultarCpeRequest request)
-        {
-            var response = new StatusResponse();
+        //public async Task<List<DescargarZipResponse>> ConsultarLoteCpeAsync(
+        //    string token,
+        //    List<DescargarZipRequest> comprobantes,
+        //    int maxConcurrent = 5,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var results = new ConcurrentBag<DescargarZipResponse>();
 
-            try
-            {
-                var client = new billServiceClient();
+        //    await Parallel.ForEachAsync(comprobantes,
+        //        new ParallelOptions { MaxDegreeOfParallelism = maxConcurrent, CancellationToken = cancellationToken },
+        //        async (cpe, ct) =>
+        //        {
+        //            // 🔽 Descarga el ZIP (ejemplo: servicio externo)
+        //            var zipBytes_1 = await EjecutarConResilienciaAsync(
+        //                () => DescargarZipAsync(token, cpe),
+        //                maxIntentos: 3,
+        //                delayMs: 2000);
 
-                // Añadimos el comportamiento WS-Security
-                client.Endpoint.EndpointBehaviors.Add(
-                    new WsSecurityEndpointBehavior($"{request.RucConsulta}{request.Username}", request.Password));
+        //            // 🔽 Orquestador hace todo: leer → parsear → guardar
+        //            var resultado = await _cpeProcessor.ProcesarAsync(zipBytes, ct);
 
-                await client.OpenAsync();
+        //            results.Add(resultado);
+        //        });
 
-                var result = await client.getStatusAsync(
-                    request.RucEmisor,
-                    request.TipoComprobante,
-                    request.Serie,
-                    request.Numero
-                );
+        //    return results.ToList();
+        //}
 
-                response.StatusCode = result.status.statusCode;
-                response.StatusMessage = result.status.statusMessage;
-                response.Content = result.status.content;
-            }
-            catch (FaultException faultEx)
-            {
-                response.Success = false;
-                response.ErrorMessage = $"Error SOAP: {faultEx.Message}";
-            }
-            catch (CommunicationException commEx)
-            {
-                response.Success = false;
-                response.ErrorMessage = $"Error de comunicación: {commEx.Message}";
-            }
-            catch (TimeoutException timeoutEx)
-            {
-                response.Success = false;
-                response.ErrorMessage = $"Tiempo de espera agotado: {timeoutEx.Message}";
-            }
-            catch (Exception ex)
-            {
-                response.Success = false;
-                response.ErrorMessage = $"Error general: {ex.Message}";
-            }
+        //public async Task<DescargarZipResponse> ProcesarAsync(byte[] zipFile, CancellationToken ct)
+        //{
+        //    // 1. Leer ZIP
+        //    var xmlContent = _zipService.ExtractXmlFromZip(zipFile);
 
-            return response;
-        }
+        //    // 2. Parsear XML
+        //    var entidad = _xmlParser.Parse(xmlContent);
+
+        //    // 3. Guardar en BD
+        //    await _repository.SaveAsync(entidad, ct);
+
+        //    return entidad;
+        //}
+
+
+
+        //public async Task<StatusResponse> StatusCdrAsync(ConsultarCpeRequest request)
+        //{
+        //    var response = new StatusResponse();
+
+        //    try
+        //    {
+        //        var client = new billServiceClient();
+
+        //        // Añadimos el comportamiento WS-Security
+        //        client.Endpoint.EndpointBehaviors.Add(
+        //            new WsSecurityEndpointBehavior($"{request.RucConsulta}{request.Username}", request.Password));
+
+        //        await client.OpenAsync();
+
+        //        var result = await client.getStatusAsync(
+        //            request.RucEmisor,
+        //            request.TipoComprobante,
+        //            request.Serie,
+        //            request.Numero
+        //        );
+
+        //        response.StatusCode = result.status.statusCode;
+        //        response.StatusMessage = result.status.statusMessage;
+        //        response.Content = result.status.content;
+        //    }
+        //    catch (FaultException faultEx)
+        //    {
+        //        response.Success = false;
+        //        response.ErrorMessage = $"Error SOAP: {faultEx.Message}";
+        //    }
+        //    catch (CommunicationException commEx)
+        //    {
+        //        response.Success = false;
+        //        response.ErrorMessage = $"Error de comunicación: {commEx.Message}";
+        //    }
+        //    catch (TimeoutException timeoutEx)
+        //    {
+        //        response.Success = false;
+        //        response.ErrorMessage = $"Tiempo de espera agotado: {timeoutEx.Message}";
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        response.Success = false;
+        //        response.ErrorMessage = $"Error general: {ex.Message}";
+        //    }
+
+        //    return response;
+        //}
+
+        //public async Task<List<DescargarZipResponse>> ConsultarLoteCpeAsync(
+        //    string token,
+        //    List<DescargarZipRequest> comprobantes,
+        //    int maxConcurrent = 5,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var results = new ConcurrentBag<DescargarZipResponse>();
+
+        //    await Parallel.ForEachAsync(comprobantes,
+        //        new ParallelOptions { MaxDegreeOfParallelism = maxConcurrent, CancellationToken = cancellationToken },
+        //        async (cpe, ct) =>
+        //        {
+        //            var resultado = await EjecutarConResilienciaAsync(() =>
+        //                ControlCpeConsultaXmlAsync(token, cpe), maxIntentos: 3, delayMs: 2000);
+
+        //            // 🔄 si ControlCpeConsultaXml falla → fallback a ConsultaCpeComprobante
+        //            if (!resultado.EsExito)
+        //            {
+        //                resultado = await EjecutarConResilienciaAsync(() =>
+        //                    ConsultaCpeComprobanteAsync(token, cpe), maxIntentos: 3, delayMs: 2000);
+        //            }
+
+        //            results.Add(resultado);
+        //        });
+
+        //    return results.ToList();
+        //}
+
+
     }
 }

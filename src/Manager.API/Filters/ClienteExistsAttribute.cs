@@ -1,3 +1,5 @@
+using Manager.Domain.Services.Interfaces;
+
 namespace Manager.API.Filters
 {
     public class ClienteExistsAttribute : TypeFilterAttribute

@@ -1,0 +1,7 @@
+﻿namespace Manager.Domain.Repositories
+{
+    public interface IZipReader
+    {
+        string ExtractXmlFromZip(byte[] zipFile);
+    }
+}
