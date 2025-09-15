@@ -1,0 +1,19 @@
+{
+  "providerId": "Microsoft.Tools.ServiceModel.Svcutil",
+  "version": "8.0.0",
+  "options": {
+    "inputs": [
+      "http://server01/ReportServer/ReportExecution2005.asmx?wsdl"
+    ],
+    "namespaceMappings": [
+      "*, Manager.Reporting.SsrsClient"
+    ],
+    "outputFile": "Reference.cs",
+    "references": [
+      "Microsoft.AspNetCore.OpenApi, {Microsoft.AspNetCore.OpenApi, 9.0.6}",
+      "Microsoft.OpenApi, {Microsoft.OpenApi, 1.6.17}"
+    ],
+    "targetFramework": "net9.0",
+    "typeReuseMode": "All"
+  }
+}
