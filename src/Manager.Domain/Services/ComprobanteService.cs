@@ -78,6 +78,7 @@ namespace Manager.Domain.Services
                 // 3. Obtener Glosa
                 var glosa = string.Join("; ", invoice.InvoiceLines.Select(l => l.Description.Length > 15 ? l.Description.Substring(0, 15) : l.Description));
                 existinfRecord.Glosa = glosa;
+                existinfRecord.TieneGlosa = true;
 
                 // 4. Guardar en BD
                 await _comprobanteRepository.UpdateAsync(existinfRecord);
