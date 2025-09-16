@@ -94,10 +94,28 @@ var app = builder.Build();
 app.MigrateDatabase<ManagerContext>();
 
 // 🌍 Pipeline HTTP (Configure the HTTP request pipeline.)
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
+    // Habilita Swagger solo en desarrollo o staging
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    //app.UseSwaggerUI(c =>
+    //{
+    //    // Detecta dinámicamente la ruta base
+    //    var swaggerJsonBasePath = string.IsNullOrEmpty(c.RoutePrefix) ? "." : "..";
+
+    //    // Puedes agregar múltiples endpoints si manejas varias versiones
+    //    c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "Manager.API v1");
+    //    c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v2/swagger.json", "Manager.API v2");
+
+    //    // Opciones de UI
+    //    c.RoutePrefix = string.Empty;          // Swagger en la raíz
+    //    c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List); // Colapsa secciones
+    //    c.DefaultModelsExpandDepth(-1);       // Oculta modelos por defecto
+    //    c.DisplayRequestDuration();           // Muestra tiempos de respuesta
+    //    c.EnableFilter();                     // Permite buscar operaciones
+    //});
 }
 
 app.UseHttpsRedirection();

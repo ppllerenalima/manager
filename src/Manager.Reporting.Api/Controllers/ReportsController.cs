@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.ServiceModel;
-using Manager.Reporting.SsrsClient;
+﻿using Manager.Reporting.SsrsClient;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.ServiceModel;
 
 namespace Manager.Reporting.Api.Controllers
 {
@@ -30,11 +30,10 @@ namespace Manager.Reporting.Api.Controllers
         }
 
         [HttpGet("comprobantes")]
-        public async Task<IActionResult> GetComprobantesReport([FromQuery] Guid perTributarioId, [FromQuery] string format = "EXCEL")
+        public async Task<IActionResult> GetComprobantesReport([FromQuery] Guid perTributarioId, [FromQuery] string format = "EXCELOPENXML")
         {
             try
             {
-                // 1️⃣ Cargar reporte
                 var loadResponse = await _client.LoadReportAsync(
                     new TrustedUserHeader(),
                     "/manager.reportes/Rpt_ComprobantesListadoPorPeriodoTributario",
@@ -43,46 +42,38 @@ namespace Manager.Reporting.Api.Controllers
 
                 string execId = loadResponse.executionInfo.ExecutionID;
 
-                // 2️⃣ Asignar credenciales del DataSource (SQL)
                 var credentials = new[]
                 {
                     new DataSourceCredentials
                     {
-                        DataSourceName = "dsServer01",  // nombre del DataSource en SSRS
+                        DataSourceName = "dsServer01",
                         UserName = "sa",
                         Password = "41707564@*/"
                     }
                 };
-
                 await _client.SetExecutionCredentialsAsync(new ExecutionHeader { ExecutionID = execId }, null, credentials);
 
-                // 3️⃣ Establecer parámetros
                 var parameters = new[]
                 {
                     new ParameterValue { Name = "perTributarioId", Value = perTributarioId.ToString() }
-                };
+        };
+                await _client.SetExecutionParametersAsync(new ExecutionHeader { ExecutionID = execId }, null, parameters, "es-PE");
 
-                await _client.SetExecutionParametersAsync(
-                    new ExecutionHeader { ExecutionID = execId },
-                    null,
-                    parameters,
-                    "es-PE"
-                );
-
-                // 4️⃣ Renderizar reporte
+                // Usar EXCELOPENXML para .xlsx
                 var renderResponse = await _client.RenderAsync(
                     new RenderRequest
                     {
                         ExecutionHeader = new ExecutionHeader { ExecutionID = execId },
                         TrustedUserHeader = null,
-                        Format = format,
+                        Format = format, // "EXCELOPENXML"
                         DeviceInfo = null
                     });
 
                 byte[] result = renderResponse.Result;
-                string mimeType = renderResponse.MimeType ?? "application/octet-stream";
+                string mimeType = renderResponse.MimeType ?? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                string extension = format == "EXCELOPENXML" ? "xlsx" : "xls";
 
-                return File(result, mimeType, $"Comprobantes_{perTributarioId}.{format.ToLower()}");
+                return File(result, mimeType, $"Comprobantes_{perTributarioId}.{extension}");
             }
             catch (Exception ex)
             {
