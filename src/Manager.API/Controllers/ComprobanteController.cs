@@ -20,11 +20,11 @@ namespace Manager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get(Guid PerTributarioId, [FromQuery] PaginationRequestModel pagination)
+        public async Task<IActionResult> Get([FromQuery] Guid PerTributarioId, [FromQuery] string search, [FromQuery] PaginationRequestModel pagination)
         {
             pagination ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
 
-            var result = await _comprobanteService.GetComprobantesAsync(PerTributarioId);
+            var result = await _comprobanteService.GetComprobantesAsync(PerTributarioId, search ?? "");
 
             var totalComprobantes = result.Count();
 

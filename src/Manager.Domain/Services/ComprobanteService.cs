@@ -24,9 +24,9 @@ namespace Manager.Domain.Services
             _logger = logger;
         }
 
-        public async Task<IEnumerable<ComprobanteResponse>> GetComprobantesAsync(Guid perTributarioId)
+        public async Task<IEnumerable<ComprobanteResponse>> GetComprobantesAsync(Guid perTributarioId, string search)
         {
-            var result = await _comprobanteRepository.GetAsync(predicate: z => z.PerTributarioId == perTributarioId);
+            var result = await _comprobanteRepository.GetAsync(predicate: z => z.PerTributarioId == perTributarioId && (z.NombreProveedor.Contains(search) || z.NumeroDocIdentidad.Contains(search) || z.Serie.Contains(search) || z.Numero.Contains(search)));
 
             return result
                 .Select(x => _comprobanteMapper.Map<ComprobanteResponse>(x));
