@@ -9,6 +9,12 @@ namespace Manager.Infrastructure.SchemaDefinitions
         {
             builder.ToTable("Comprobantes", ManagerContext.DEFAULT_SCHEMA);
 
+            builder.Property(e => e.Total).HasPrecision(18, 2);
+
+            builder.Property(e => e.IgvDG).HasPrecision(18, 2);
+
+            builder.Property(e => e.TipoCambio).HasPrecision(18, 4);
+
             builder.HasKey(x => x.Id);
         }
     }
