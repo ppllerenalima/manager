@@ -91,13 +91,16 @@ namespace Manager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("BiGravadoDG")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<decimal?>("BiGravadoDGNG")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<decimal?>("BiGravadoDNG")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<string>("CarOrigen")
                         .IsRequired()
@@ -143,23 +146,28 @@ namespace Manager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("Icbper")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<string>("IdProyecto")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("IgvDG")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<decimal?>("IgvDGNG")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<decimal?>("IgvDNG")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<decimal?>("Imb")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<string>("Incal")
                         .IsRequired()
@@ -169,7 +177,8 @@ namespace Manager.API.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal?>("Isc")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<string>("Moneda")
                         .IsRequired()
@@ -196,7 +205,8 @@ namespace Manager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("OtrosTributos")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<Guid>("PerTributarioId")
                         .HasColumnType("uniqueidentifier");
@@ -206,7 +216,8 @@ namespace Manager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("PorcPart")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<string>("RazonSocial")
                         .IsRequired()
@@ -232,7 +243,8 @@ namespace Manager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("TipoCambio")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<string>("TipoComprobante")
                         .IsRequired()
@@ -247,10 +259,12 @@ namespace Manager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("Total")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 4)
+                        .HasColumnType("decimal(12,4)");
 
                     b.Property<decimal?>("ValorAdqNG")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
 
                     b.HasKey("Id");
 
