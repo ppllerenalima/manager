@@ -310,7 +310,7 @@ namespace Manager.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CuentaBaseSOL", "manager");
+                    b.ToTable("CuentaBaseSOLs", "manager");
                 });
 
             modelBuilder.Entity("Manager.Domain.Entities.Grupo", b =>
@@ -324,7 +324,9 @@ namespace Manager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsInactive")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.HasKey("Id");
 

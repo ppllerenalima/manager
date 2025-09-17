@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Manager.API.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial_Project : Migration
+    public partial class InitMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,7 +15,7 @@ namespace Manager.API.Migrations
                 name: "manager");
 
             migrationBuilder.CreateTable(
-                name: "CuentaBaseSOL",
+                name: "CuentaBaseSOLs",
                 schema: "manager",
                 columns: table => new
                 {
@@ -29,7 +29,7 @@ namespace Manager.API.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CuentaBaseSOL", x => x.Id);
+                    table.PrimaryKey("PK_CuentaBaseSOLs", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -39,7 +39,7 @@ namespace Manager.API.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsInactive = table.Column<bool>(type: "bit", nullable: false)
+                    IsInactive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -93,10 +93,10 @@ namespace Manager.API.Migrations
                 {
                     table.PrimaryKey("PK_TokenBases", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TokenBases_CuentaBaseSOL_CuentaBaseSolId",
+                        name: "FK_TokenBases_CuentaBaseSOLs_CuentaBaseSolId",
                         column: x => x.CuentaBaseSolId,
                         principalSchema: "manager",
-                        principalTable: "CuentaBaseSOL",
+                        principalTable: "CuentaBaseSOLs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -565,7 +565,7 @@ namespace Manager.API.Migrations
                 schema: "manager");
 
             migrationBuilder.DropTable(
-                name: "CuentaBaseSOL",
+                name: "CuentaBaseSOLs",
                 schema: "manager");
 
             migrationBuilder.DropTable(

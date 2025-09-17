@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Manager.API.Migrations
 {
     [DbContext(typeof(ManagerContext))]
-    [Migration("20250917044927_Initial_Project")]
-    partial class Initial_Project
+    [Migration("20250917134651_InitMigration")]
+    partial class InitMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -313,7 +313,7 @@ namespace Manager.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CuentaBaseSOL", "manager");
+                    b.ToTable("CuentaBaseSOLs", "manager");
                 });
 
             modelBuilder.Entity("Manager.Domain.Entities.Grupo", b =>
@@ -327,7 +327,9 @@ namespace Manager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsInactive")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.HasKey("Id");
 

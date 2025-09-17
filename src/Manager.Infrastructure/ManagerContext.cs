@@ -15,7 +15,7 @@
 
         public DbSet<Cliente> Clientes { get; set; }
         public DbSet<Comprobante> Comprobantes { get; set; }
-        public DbSet<CuentaBaseSOL> CuentaBaseSOL { get; set; }
+        public DbSet<CuentaBaseSOL> CuentaBaseSOLs { get; set; }
         public DbSet<Grupo> Grupos { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Persona> Personas { get; set; }

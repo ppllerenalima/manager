@@ -4,7 +4,7 @@
     {
         public void Configure(EntityTypeBuilder<CuentaBaseSOL> builder)
         {
-            builder.ToTable("CuentaBaseSOL", ManagerContext.DEFAULT_SCHEMA);
+            builder.ToTable("CuentaBaseSOLs", ManagerContext.DEFAULT_SCHEMA);
 
             builder.HasKey(c => c.Id);
 
