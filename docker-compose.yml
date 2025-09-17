@@ -1,0 +1,36 @@
+services:
+  manager_api:
+    container_name: manager_api
+    build:
+      context: .
+      dockerfile: containers/api/Dockerfile
+    env_file:
+      - containers/api/api.env
+    networks:
+      - my_network
+    ports:
+      - "5000:5000"
+    depends_on:
+      - manager_db
+      - manager_esb
+
+  manager_db:
+    container_name: manager_db
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    networks:
+      - my_network
+    env_file:
+      - containers/db/db.env
+
+  manager_esb:
+    container_name: manager_esb
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge

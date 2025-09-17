@@ -13,9 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manager.Infrastructure", "s
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{73E7B957-6387-48B8-ACEE-AA0586F23DF9}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\.env = ..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\.env
+		.env = .env
 		.gitignore = .gitignore
-		..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\docker-compose.yml = ..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\docker-compose.yml
+		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Reports", "Reports", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
@@ -28,13 +28,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "containers", "containers", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{7C5AA7F1-2879-497B-B972-BA91FDAAE656}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\containers\api\api.env = ..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\containers\api\api.env
-		..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\containers\api\Dockerfile = ..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\containers\api\Dockerfile
+		containers\api\api.env = containers\api\api.env
+		containers\api\Dockerfile = containers\api\Dockerfile
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "db", "db", "{6FDF6E5F-269B-4EB1-A3E0-1C3A582658A3}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\containers\db\db.env = ..\..\..\..\..\..\Cursos\RESTful-with-ASP.NET-Core-3\Project\Catalog\Catalog.API\containers\db\db.env
+		containers\db\db.env = containers\db\db.env
 	EndProjectSection
 EndProject
 Global
