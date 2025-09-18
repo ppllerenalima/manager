@@ -37,6 +37,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "db", "db", "{6FDF6E5F-269B-
 		containers\db\db.env = containers\db\db.env
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "angular", "angular", "{CE79F5FB-0FF0-4029-8BA7-D1D9A044943D}"
+	ProjectSection(SolutionItems) = preProject
+		containers\angular\Dockerfile = containers\angular\Dockerfile
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -191,6 +196,7 @@ Global
 		{79FD0B80-C065-46B6-AC85-FEF2276A52F5} = {BDCA1585-A034-499B-9199-1C4B9173E187}
 		{7C5AA7F1-2879-497B-B972-BA91FDAAE656} = {77673E21-8A49-436F-B9C0-4380FFF8152E}
 		{6FDF6E5F-269B-4EB1-A3E0-1C3A582658A3} = {77673E21-8A49-436F-B9C0-4380FFF8152E}
+		{CE79F5FB-0FF0-4029-8BA7-D1D9A044943D} = {77673E21-8A49-436F-B9C0-4380FFF8152E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {45E540DA-AAD0-439E-BA92-BD2E444FA5C5}
