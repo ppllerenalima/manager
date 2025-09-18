@@ -47,17 +47,17 @@ services:
     networks:
       - my_network
 
-  manager_ui:
-    container_name: manager_ui
-    build:
-      context: .\Frontend\packages\main   # 👈 aquí va la carpeta raíz de tu Angular (donde está package.json)
-      dockerfile: containers/angular/Dockerfile
-    ports:
-      - "4200:80" # Angular disponible en http://localhost:4200
-    networks:
-      - my_network
-    depends_on:
-      - manager_api
+  # manager_ui:
+  #   container_name: manager_ui
+  #   build:
+  #     context: ./Frontend   # 👈 aquí va la carpeta raíz de tu Angular (donde está package.json)
+  #     dockerfile: containers/angular/Dockerfile
+  #   ports:
+  #     - "4200:80" # Angular disponible en http://localhost:4200
+  #   networks:
+  #     - my_network
+  #   depends_on:
+  #     - manager_api
   
 networks:
   my_network:

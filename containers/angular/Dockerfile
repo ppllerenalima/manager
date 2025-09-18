@@ -1,9 +1,9 @@
 # Etapa 1: build de Angular
 FROM node:18 AS build
 WORKDIR /app
-COPY package*.json ./
+COPY packages/main/package*.json ./
 RUN npm install
-COPY . .
+COPY packages/main/ ./
 RUN npm run build --prod
 
 # Etapa 2: servir con Nginx
