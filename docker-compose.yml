@@ -14,7 +14,21 @@ services:
     # depends_on:
     #   manager_db:
     #     condition: service_healthy
-
+  
+  manager_reporting_api:
+    container_name: manager_reporting_api
+    build:
+      context: . # 👈 raíz del proyecto
+      dockerfile: containers/reporting_api/Dockerfile
+    env_file:
+      - containers/reporting_api/reporting_api.env
+    networks:
+      - my_network
+    ports:
+      - 5001:5000  # 👈 expone en tu host (5001) la API de Reporting (puerto interno 5000)
+    depends_on:
+      - manager_api   # 👈 si depende de la API principal
+  
   # manager_db:
   #   image: mcr.microsoft.com/mssql/server:2019-latest
   #   container_name: manager_db
