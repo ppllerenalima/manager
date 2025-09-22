@@ -8,8 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 // 🔐 CORS
 var myAllowSpecificOrigins = "myAllowSpecificOrigins";
 
-// 🔌 Cadena de conexión
-var connectionString = builder.Configuration.GetSection("DataSource:ConnectionString").Value;
+// 🔌 Cadena de conexión (forma estándar en .NET)
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 // 🔧 Agregar servicios al contenedor (order lógico por tipo)
 builder.Services

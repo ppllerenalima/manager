@@ -11,41 +11,31 @@ services:
       - my_network
     ports:
       - 5000:5000
-    depends_on:
-      manager_db:
-        condition: service_healthy
     # depends_on:
-    #   - manager_db
-    #   - manager_esb
+    #   manager_db:
+    #     condition: service_healthy
 
-  manager_db:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    container_name: manager_db
-    env_file:
-      - containers/db/db.env
-    networks:
-      - my_network
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $${SA_PASSWORD} -Q 'SELECT 1' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
   # manager_db:
-  #   container_name: manager_db
   #   image: mcr.microsoft.com/mssql/server:2019-latest
-  #   networks:
-  #     - my_network
+  #   container_name: manager_db
   #   env_file:
   #     - containers/db/db.env
+  #   networks:
+  #     - my_network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $${SA_PASSWORD} -Q 'SELECT 1' || exit 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
   
-  manager_esb:
-    container_name: manager_esb
-    image: rabbitmq:3-management
-    ports:
-      - 5672:5672
-      - 15672:15672
-    networks:
-      - my_network
+  # manager_esb:
+  #   container_name: manager_esb
+  #   image: rabbitmq:3-management
+  #   ports:
+  #     - 5672:5672
+  #     - 15672:15672
+  #   networks:
+  #     - my_network
 
   manager_ui:
     container_name: manager_ui

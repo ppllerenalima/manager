@@ -9,7 +9,7 @@
       <am:Name>SSDTRS</am:Name>
       <am:Version>17.14.36408.4</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2025-09-16T06:04:18.5652714Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2025-09-20T04:16:14.2405369Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <df:DefaultFontFamily>Segoe UI</df:DefaultFontFamily>
   <AutoRefresh>0</AutoRefresh>
@@ -17,7 +17,7 @@
     <DataSource Name="dsServer01">
       <ConnectionProperties>
         <DataProvider>SQL</DataProvider>
-        <ConnectString>Data Source=server01;Initial Catalog=Manager</ConnectString>
+        <ConnectString>Data Source=server01;Initial Catalog=ManagerDb</ConnectString>
         <Prompt>Especifique un nombre de usuario y una contraseña para el origen de datos dsServer01:</Prompt>
       </ConnectionProperties>
       <rd:SecurityType>DataBase</rd:SecurityType>

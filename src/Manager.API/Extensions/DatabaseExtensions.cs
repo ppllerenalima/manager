@@ -1,5 +1,3 @@
-using Manager.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace Manager.API.Extensions
@@ -9,7 +7,7 @@ namespace Manager.API.Extensions
         public static IServiceCollection AddManagerContext(this IServiceCollection services, string connectionString)
         {
             return services
-                .AddEntityFrameworkSqlServer()
+                //.AddEntityFrameworkSqlServer()
                 .AddDbContext<ManagerContext>(opt =>
                 {
                     opt.UseSqlServer(
