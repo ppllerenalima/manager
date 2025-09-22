@@ -36,7 +36,7 @@ namespace Manager.Reporting.Api.Controllers
             {
                 var loadResponse = await _client.LoadReportAsync(
                     new TrustedUserHeader(),
-                    "/manager.reportes/Rpt_ComprobantesListadoPorPeriodoTributario",
+                    "/Manager.Reporting/Rpt_ComprobantesListadoPorPeriodoTributario",
                     null
                 );
 
