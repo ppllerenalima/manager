@@ -48,7 +48,7 @@ namespace Manager.Reporting.Api.Controllers
                     {
                         DataSourceName = "dsServer01",
                         UserName = "sa",
-                        Password = "P@ssw0rd"
+                        Password = "41707564@*/"
                     }
                 };
                 await _client.SetExecutionCredentialsAsync(new ExecutionHeader { ExecutionID = execId }, null, credentials);
