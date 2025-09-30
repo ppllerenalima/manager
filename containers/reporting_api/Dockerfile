@@ -3,6 +3,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 5000
 
+# Instala la biblioteca para soporte NTLM/Kerberos
+RUN apt-get update && apt-get install -y libgssapi-krb5-2 gss-ntlmssp && apt-get clean
+
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /project
 

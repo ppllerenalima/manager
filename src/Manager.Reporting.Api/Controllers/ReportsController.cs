@@ -19,13 +19,13 @@ namespace Manager.Reporting.Api.Controllers
                 MaxReceivedMessageSize = 50_000_000
             };
 
-            var endpoint = new EndpointAddress("http://server01/ReportServer/ReportExecution2005.asmx");
+            var endpoint = new EndpointAddress("http://172.16.11.227/ReportServer/ReportExecution2005.asmx");
 
             _client = new ReportExecutionServiceSoapClient(binding, endpoint);
 
             // Credenciales NTLM (Windows)
             _client.ClientCredentials.Windows.ClientCredential = new NetworkCredential(
-                "Administrador", "Aa1234*", "DOMAIN"
+                "Administrador", "Aa1234*", "server01"
             );
         }
 
