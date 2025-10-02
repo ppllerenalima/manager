@@ -20,6 +20,7 @@ builder.Services
     // REPOSITORIOS
     .AddScoped<IClienteRepository, ClienteRepository>()
     .AddScoped<IComprobanteRepository, ComprobanteRepository>()
+    .AddScoped<IConfiguracionGlobalRepository, ConfiguracionGlobalRepository>()
     .AddScoped<ICuentaBaseSolRepository, CuentaBaseSolRepository>()
     .AddScoped<IGrupoRepository, GrupoRepository>()
     .AddScoped<IPersonaRepository, PersonaRepository>()

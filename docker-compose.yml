@@ -28,7 +28,7 @@ services:
       - 5001:5000  # 👈 expone en tu host (5001) la API de Reporting (puerto interno 5000)
     depends_on:
       - manager_api   # 👈 si depende de la API principal
-  
+
   # manager_db:
   #   image: mcr.microsoft.com/mssql/server:2019-latest
   #   container_name: manager_db
@@ -66,3 +66,6 @@ services:
 networks:
   my_network:
     driver: bridge
+
+volumes:
+  manager_db_data:   # 👈 aquí declaras el volumen persistente

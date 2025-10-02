@@ -19,7 +19,7 @@ namespace Manager.Reporting.Api.Controllers
                 MaxReceivedMessageSize = 50_000_000
             };
 
-            var endpoint = new EndpointAddress("http://172.16.11.227/ReportServer/ReportExecution2005.asmx");
+            var endpoint = new EndpointAddress("http://192.168.1.38/ReportServer/ReportExecution2005.asmx");
 
             _client = new ReportExecutionServiceSoapClient(binding, endpoint);
 
@@ -48,7 +48,7 @@ namespace Manager.Reporting.Api.Controllers
                     {
                         DataSourceName = "dsServer01",
                         UserName = "sa",
-                        Password = "41707564@*/"
+                        Password = "P@ssw0rd"
                     }
                 };
                 await _client.SetExecutionCredentialsAsync(new ExecutionHeader { ExecutionID = execId }, null, credentials);

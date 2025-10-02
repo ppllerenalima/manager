@@ -32,6 +32,7 @@ namespace Manager.Domain.Extensions
             services
                 .AddScoped<IClienteService, ClienteService>()
                 .AddScoped<IComprobanteService, ComprobanteService>()
+                .AddScoped<IConfiguracionGlobalService, ConfiguracionGlobalService>()
                 .AddScoped<ICuentaBaseSolService, CuentaBaseSolService>()
                 .AddScoped<IGrupoService, GrupoService>()
                 .AddScoped<IRoleService, RoleService>()

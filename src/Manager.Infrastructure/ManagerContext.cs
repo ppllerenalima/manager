@@ -15,6 +15,7 @@
 
         public DbSet<Cliente> Clientes { get; set; }
         public DbSet<Comprobante> Comprobantes { get; set; }
+        public DbSet<ConfiguracionGlobal> ConfiguracionGlobals { get; set; }
         public DbSet<CuentaBaseSOL> CuentaBaseSOLs { get; set; }
         public DbSet<Grupo> Grupos { get; set; }
         public DbSet<Role> Roles { get; set; }

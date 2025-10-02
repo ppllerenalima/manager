@@ -1,5 +1,7 @@
-﻿using Manager.Domain.Requests.PerTributario;
+﻿using Manager.Domain.Requests.ConfiguracionGlobal;
+using Manager.Domain.Requests.PerTributario;
 using Manager.Domain.Responses.ComprobanteResponses;
+using Manager.Domain.Responses.ConfiguracionGlobalResponses;
 using Manager.Domain.Responses.PerTributarioResponses;
 
 namespace Manager.Domain.Mappers
@@ -15,6 +17,10 @@ namespace Manager.Domain.Mappers
             CreateMap<EditClienteRequest, Cliente>().ReverseMap();
 
             CreateMap<ComprobanteResponse, Comprobante>().ReverseMap();
+
+            CreateMap<ConfiguracionGlobalResponse, ConfiguracionGlobal>().ReverseMap();
+            CreateMap<AddConfiguracionGlobalRequest, ConfiguracionGlobal>().ReverseMap();
+            CreateMap<EditConfiguracionGlobalRequest, ConfiguracionGlobal>().ReverseMap();
 
             CreateMap<CuentaBaseSolResponse, CuentaBaseSOL>().ReverseMap();
             CreateMap<AddCuentaBaseSolRequest, CuentaBaseSOL>().ReverseMap();
