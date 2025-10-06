@@ -1,18 +1,14 @@
-﻿using Manager.Domain.Requests.ConfiguracionGlobal;
-using Manager.Domain.Responses.ConfiguracionGlobalResponses;
-using Manager.Domain.Services.Interfaces;
-
-namespace Manager.API.Controllers
+﻿namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class ConfiguracionGlobalController : ControllerBase
     {
-        private readonly IConfiguracionGlobalService _ConfiguracionGlobalService;
+        private readonly IConfiguracionGlobalService _configuracionGlobalService;
 
-        public ConfiguracionGlobalController(IConfiguracionGlobalService ConfiguracionGlobalService)
+        public ConfiguracionGlobalController(IConfiguracionGlobalService configuracionGlobalService)
         {
-            _ConfiguracionGlobalService = ConfiguracionGlobalService;
+            _configuracionGlobalService = configuracionGlobalService;
         }
 
         [HttpGet]
@@ -20,7 +16,7 @@ namespace Manager.API.Controllers
         {
             pagination ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
 
-            var result = await _ConfiguracionGlobalService.GetConfiguracionGlobalsAsync();
+            var result = await _configuracionGlobalService.GetConfiguracionGlobalsAsync();
 
             var totalConfiguracionGlobals = result.Count();
 
@@ -33,18 +29,37 @@ namespace Manager.API.Controllers
             return Ok(model);
         }
 
+        [HttpGet("FirstOrDefault")]
+        public async Task<IActionResult> GetFirstOrDefault()
+        {
+            var result = await _configuracionGlobalService.GetConfiguracionGlobalFirstOrDefaultAsync();
+
+            if (result is null)
+                return NotFound(new BaseResponseGeneric<ConfiguracionGlobalResponse>
+                {
+                    Success = false,
+                    ErrorMessage = "No se encontró ninguna cuenta base."
+                });
+
+            return Ok(new BaseResponseGeneric<ConfiguracionGlobalResponse>
+            {
+                Success = true,
+                Data = result
+            });
+        }
+
         [HttpGet("{id:guid}")]
         [ConfiguracionGlobalExists]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var result = await _ConfiguracionGlobalService.GetConfiguracionGlobalAsync(new GetConfiguracionGlobalRequest { Id = id });
+            var result = await _configuracionGlobalService.GetConfiguracionGlobalAsync(new GetConfiguracionGlobalRequest { Id = id });
             return Ok(result);
         }
 
         [HttpPost]
         public async Task<IActionResult> Post(AddConfiguracionGlobalRequest request)
         {
-            var result = await _ConfiguracionGlobalService.AddConfiguracionGlobalAsync(request);
+            var result = await _configuracionGlobalService.AddConfiguracionGlobalAsync(request);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, null);
         }
 
@@ -53,7 +68,7 @@ namespace Manager.API.Controllers
         public async Task<IActionResult> Put(Guid id, EditConfiguracionGlobalRequest request)
         {
             request.Id = id;
-            var result = await _ConfiguracionGlobalService.EditConfiguracionGlobalAsync(request);
+            var result = await _configuracionGlobalService.EditConfiguracionGlobalAsync(request);
             return Ok(result);
         }
 
@@ -62,7 +77,7 @@ namespace Manager.API.Controllers
         public async Task<IActionResult> Delete(Guid id)
         {
             var request = new DeleteConfiguracionGlobalRequest { Id = id };
-            await _ConfiguracionGlobalService.DeleteConfiguracionGlobalAsync(request);
+            await _configuracionGlobalService.DeleteConfiguracionGlobalAsync(request);
             return NoContent();
         }
     }

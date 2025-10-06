@@ -1,79 +1,84 @@
-using Manager.Domain.Requests.ConfiguracionGlobal;
-using Manager.Domain.Responses.ConfiguracionGlobalResponses;
-using Manager.Domain.Services.Interfaces;
-
 namespace Manager.Domain.Services
 {
     public class ConfiguracionGlobalService : IConfiguracionGlobalService
     {
-        private readonly IMapper _ConfiguracionGlobalMapper;
-        private readonly IConfiguracionGlobalRepository _ConfiguracionGlobalRepository;
+        private readonly IMapper _configuracionGlobalMapper;
+        private readonly IConfiguracionGlobalRepository _configuracionGlobalRepository;
         private readonly ILogger<ConfiguracionGlobalService> _logger;
 
-        public ConfiguracionGlobalService(IConfiguracionGlobalRepository ConfiguracionGlobalRepository, IMapper ConfiguracionGlobalMapper)
+        public ConfiguracionGlobalService(IConfiguracionGlobalRepository configuracionGlobalRepository, IMapper configuracionGlobalMapper)
         {
-            _ConfiguracionGlobalRepository = ConfiguracionGlobalRepository;
-            _ConfiguracionGlobalMapper = ConfiguracionGlobalMapper;
+            _configuracionGlobalRepository = configuracionGlobalRepository;
+            _configuracionGlobalMapper = configuracionGlobalMapper;
         }
 
-        public ConfiguracionGlobalService(IConfiguracionGlobalRepository ConfiguracionGlobalRepository, IMapper ConfiguracionGlobalMapper, ILogger<ConfiguracionGlobalService> logger)
+        public ConfiguracionGlobalService(IConfiguracionGlobalRepository configuracionGlobalRepository, IMapper configuracionGlobalMapper, ILogger<ConfiguracionGlobalService> logger)
         {
-            _ConfiguracionGlobalRepository = ConfiguracionGlobalRepository;
-            _ConfiguracionGlobalMapper = ConfiguracionGlobalMapper;
+            _configuracionGlobalRepository = configuracionGlobalRepository;
+            _configuracionGlobalMapper = configuracionGlobalMapper;
             _logger = logger;
         }
 
         public async Task<IEnumerable<ConfiguracionGlobalResponse>> GetConfiguracionGlobalsAsync()
         {
-            var result = await _ConfiguracionGlobalRepository.GetAsync();
+            var result = await _configuracionGlobalRepository.GetAsync();
             return result
-                .Select(x => _ConfiguracionGlobalMapper.Map<ConfiguracionGlobalResponse>(x));
+                .Select(x => _configuracionGlobalMapper.Map<ConfiguracionGlobalResponse>(x));
+        }
+
+        public async Task<ConfiguracionGlobalResponse> GetConfiguracionGlobalFirstOrDefaultAsync()
+        {
+            var entity = await _configuracionGlobalRepository.GetFirstOrDefaultAsync();
+
+            _logger.LogInformation(Logging.Events.GetById, Messages.TargetEntityChanged_id, entity?.Id);
+
+            return _configuracionGlobalMapper.Map<ConfiguracionGlobalResponse>(entity);
         }
 
         public async Task<ConfiguracionGlobalResponse> GetConfiguracionGlobalAsync(GetConfiguracionGlobalRequest request)
         {
             if (request?.Id == null) throw new ArgumentNullException();
-            var entity = await _ConfiguracionGlobalRepository.GetAsync(request.Id);
+            var entity = await _configuracionGlobalRepository.GetAsync(request.Id);
 
             _logger.LogInformation(Logging.Events.GetById, Messages.TargetEntityChanged_id, entity?.Id);
 
-            return _ConfiguracionGlobalMapper.Map<ConfiguracionGlobalResponse>(entity);
+            return _configuracionGlobalMapper.Map<ConfiguracionGlobalResponse>(entity);
         }
 
         public async Task<ConfiguracionGlobalResponse> AddConfiguracionGlobalAsync(AddConfiguracionGlobalRequest request)
         {
-            var ConfiguracionGlobal = _ConfiguracionGlobalMapper.Map<ConfiguracionGlobal>(request);
+            var ConfiguracionGlobal = _configuracionGlobalMapper.Map<ConfiguracionGlobal>(request);
 
-            var result = _ConfiguracionGlobalRepository.AddAsync(ConfiguracionGlobal);
-            await _ConfiguracionGlobalRepository.UnitOfWork.SaveChangesAsync();
+            var result = _configuracionGlobalRepository.AddAsync(ConfiguracionGlobal);
+            await _configuracionGlobalRepository.UnitOfWork.SaveChangesAsync();
 
-            return _ConfiguracionGlobalMapper.Map<ConfiguracionGlobalResponse>(result.Result);
+            return _configuracionGlobalMapper.Map<ConfiguracionGlobalResponse>(result.Result);
         }
 
         public async Task<ConfiguracionGlobalResponse> EditConfiguracionGlobalAsync(EditConfiguracionGlobalRequest request)
         {
-            var existingRecord = await _ConfiguracionGlobalRepository.GetAsync(request.Id);
+            var existingRecord = await _configuracionGlobalRepository.GetAsync(request.Id);
 
             if (existingRecord == null) throw new ArgumentException($"Entity with {request.Id} is not present");
 
-            var entity = _ConfiguracionGlobalMapper.Map<ConfiguracionGlobal>(request);
-            var result = _ConfiguracionGlobalRepository.UpdateAsync(entity);
+            var entity = _configuracionGlobalMapper.Map<ConfiguracionGlobal>(request);
+            var result = _configuracionGlobalRepository.UpdateAsync(entity);
 
-            await _ConfiguracionGlobalRepository.UnitOfWork.SaveChangesAsync();
-            return _ConfiguracionGlobalMapper.Map<ConfiguracionGlobalResponse>(result.Result);
+            await _configuracionGlobalRepository.UnitOfWork.SaveChangesAsync();
+            return _configuracionGlobalMapper.Map<ConfiguracionGlobalResponse>(result.Result);
         }
 
         public async Task<ConfiguracionGlobalResponse> DeleteConfiguracionGlobalAsync(DeleteConfiguracionGlobalRequest request)
         {
             if (request?.Id == null) throw new ArgumentNullException();
 
-            var result = await _ConfiguracionGlobalRepository.GetAsync(request.Id);
+            var result = await _configuracionGlobalRepository.GetAsync(request.Id);
             result.IsInactive = true;
 
-            _ConfiguracionGlobalRepository.UpdateAsync(result);
-            await _ConfiguracionGlobalRepository.UnitOfWork.SaveChangesAsync();
+            _configuracionGlobalRepository.UpdateAsync(result);
+            await _configuracionGlobalRepository.UnitOfWork.SaveChangesAsync();
 
-            return _ConfiguracionGlobalMapper.Map<ConfiguracionGlobalResponse>(result);
+            return _configuracionGlobalMapper.Map<ConfiguracionGlobalResponse>(result);
         }
     }
 }

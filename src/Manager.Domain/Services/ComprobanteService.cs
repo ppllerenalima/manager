@@ -11,15 +11,18 @@ namespace Manager.Domain.Services
         private readonly IXmlInvoiceParserService _xmlInvoiceParserService;
 
         private readonly ICpeService _cpeService;
+        private readonly IConfiguracionGlobalService _configuracionGlobalService;
+
 
         private readonly ILogger<ComprobanteService> _logger;
 
-        public ComprobanteService(IComprobanteRepository comprobanteRepository, IZipReader zipReader, IXmlInvoiceParserService xmlInvoiceParserService, ICpeService cpeService, IMapper comprobanteMapper, ILogger<ComprobanteService> logger)
+        public ComprobanteService(IComprobanteRepository comprobanteRepository, IZipReader zipReader, IXmlInvoiceParserService xmlInvoiceParserService, ICpeService cpeService, IConfiguracionGlobalService configuracionGlobalService, IMapper comprobanteMapper, ILogger<ComprobanteService> logger)
         {
             _comprobanteRepository = comprobanteRepository;
             _zipReader = zipReader;
             _xmlInvoiceParserService = xmlInvoiceParserService;
             _cpeService = cpeService;
+            _configuracionGlobalService = configuracionGlobalService;
             _comprobanteMapper = comprobanteMapper;
             _logger = logger;
         }
@@ -36,7 +39,7 @@ namespace Manager.Domain.Services
         {
             int maxConcurrent = 5;
 
-            var comprobantes = await _comprobanteRepository.GetAsync(predicate: z => z.PerTributarioId == perTributarioId);
+            var comprobantes = await _comprobanteRepository.GetAsync(predicate: z => z.PerTributarioId == perTributarioId && !z.TieneGlosa);
 
             var results = new ConcurrentBag<Comrpobante_GlosaResponse>();
 
@@ -75,8 +78,24 @@ namespace Manager.Domain.Services
                 // 2. Parsear XML
                 var invoice = _xmlInvoiceParserService.ParseInvoice(xmlContent);
 
+                var configuracionGlobal = await _configuracionGlobalService.GetConfiguracionGlobalFirstOrDefaultAsync();
+
                 // 3. Obtener Glosa
-                var glosa = string.Join("; ", invoice.InvoiceLines.Select(l => l.Description.Length > 15 ? l.Description.Substring(0, 15) : l.Description));
+                var glosa = string.Join("; ",
+                    invoice.InvoiceLines.Select(l =>
+                    {
+                        var desc = l.Description ?? string.Empty;
+                        var max = configuracionGlobal.MaxCaracteresGlosa;
+
+                        if (max <= 0) return string.Empty; // fallback defensivo
+
+                        // Si la descripción supera el máximo, cortamos y añadimos "..."
+                        return desc.Length > max
+                            ? desc.Substring(0, max) + "..."
+                            : desc;
+                    })
+                );
+
                 existinfRecord.Glosa = glosa;
                 existinfRecord.TieneGlosa = true;
 

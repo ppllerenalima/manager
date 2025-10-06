@@ -4,6 +4,14 @@
     {
         public ConfiguracionGlobalRepository(ManagerContext context) : base(context)
         {
+
+        }
+
+        public async Task<ConfiguracionGlobal?> GetFirstOrDefaultAsync(CancellationToken cancellationToken)
+        {
+            return await _context.Set<ConfiguracionGlobal>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

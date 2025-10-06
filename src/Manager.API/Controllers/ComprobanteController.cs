@@ -20,23 +20,60 @@ namespace Manager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] Guid PerTributarioId, [FromQuery] string search, [FromQuery] PaginationRequestModel pagination)
+        public async Task<IActionResult> Get([FromQuery] Guid perTributarioId, [FromQuery] bool? tieneGlosa, [FromQuery] string? search, [FromQuery] PaginationRequestModel? pagination)
         {
-            pagination ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
+            pagination ??= new PaginationRequestModel();
 
-            var result = await _comprobanteService.GetComprobantesAsync(PerTributarioId, search ?? "");
+            // Traemos los comprobantes (IQueryable si es posible)
+            var result = (await _comprobanteService.GetComprobantesAsync(perTributarioId, search ?? ""))
+                         .AsQueryable();
 
+            // Aplico filtro opcional de glosa
+            if (tieneGlosa.HasValue)
+                result = result.Where(z => z.TieneGlosa == tieneGlosa.Value);
+
+            // Total filtrado
             var totalComprobantes = result.Count();
 
+            // Paginación + orden
             var itemsOnPage = result
                 .OrderBy(c => c.FechaEmision)
                 .Skip(pagination.PageSize * pagination.PageIndex)
-                .Take(pagination.PageSize);
+                .Take(pagination.PageSize)
+                .ToList();
 
-            var model = new PaginatedResponseModel<ComprobanteResponse>(pagination.PageIndex, pagination.PageSize, totalComprobantes, itemsOnPage);
+            var model = new PaginatedResponseModel<ComprobanteResponse>(
+                pagination.PageIndex,
+                pagination.PageSize,
+                totalComprobantes,
+                itemsOnPage
+            );
 
             return Ok(model);
         }
+
+
+        [HttpGet("contadores")]
+        public async Task<IActionResult> GetContadores([FromQuery] Guid perTributarioId)
+        {
+            var comprobantes = await _comprobanteService.GetComprobantesAsync(perTributarioId, string.Empty);
+
+            var contadores = new ContadoresResponse
+            {
+                ConGlosa = comprobantes.Count(c => c.TieneGlosa),
+                SinGlosa = comprobantes.Count(c => !c.TieneGlosa),
+                Total = comprobantes.Count()
+            };
+
+            var model = new BaseResponseGeneric<ContadoresResponse>
+            {
+                Success = true,
+                Data = contadores
+            };
+
+            return Ok(model);
+        }
+
 
         /// <summary>
         /// Importa y actualiza la glosa de los comprobantes electrónicos de un periodo tributario específico.

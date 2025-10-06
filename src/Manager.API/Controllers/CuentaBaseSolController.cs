@@ -1,8 +1,4 @@
-﻿using Manager.API.RequestModels;
-using Manager.Domain.Responses.CuentaBaseSolResponses;
-using Manager.Domain.Services.Interfaces;
-
-namespace Manager.API.Controllers
+﻿namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -32,6 +28,25 @@ namespace Manager.API.Controllers
             var model = new PaginatedResponseModel<CuentaBaseSolResponse>(pagination.PageIndex, pagination.PageSize, totalCuentaBaseSols, itemsOnPage);
 
             return Ok(model);
+        }
+
+        [HttpGet("FirstOrDefault")]
+        public async Task<IActionResult> GetFirstOrDefault()
+        {
+            var result = await _cuentaBaseSolService.GetCuentaBaseSolFirstOrDefaultAsync();
+
+            if (result is null)
+                return NotFound(new BaseResponseGeneric<CuentaBaseSolResponse>
+                {
+                    Success = false,
+                    ErrorMessage = "No se encontró ninguna cuenta base."
+                });
+
+            return Ok(new BaseResponseGeneric<CuentaBaseSolResponse>
+            {
+                Success = true,
+                Data = result
+            });
         }
 
         [HttpGet("{id:guid}")]

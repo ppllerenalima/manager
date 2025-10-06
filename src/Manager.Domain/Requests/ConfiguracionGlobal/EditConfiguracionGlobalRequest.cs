@@ -5,6 +5,6 @@ namespace Manager.Domain.Requests.ConfiguracionGlobal
         public Guid Id { get; set; }
         public bool IsInactive { get; set; } = false;
 
-        public string Descripcion { get; set; }
+        public int MaxCaracteresGlosa { get; set; }
     }
 }

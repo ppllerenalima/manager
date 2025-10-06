@@ -6,6 +6,7 @@ namespace Manager.Domain.Services.Interfaces
     public interface IConfiguracionGlobalService
     {
         Task<IEnumerable<ConfiguracionGlobalResponse>> GetConfiguracionGlobalsAsync();
+        Task<ConfiguracionGlobalResponse> GetConfiguracionGlobalFirstOrDefaultAsync();
         Task<ConfiguracionGlobalResponse> GetConfiguracionGlobalAsync(GetConfiguracionGlobalRequest request);
         Task<ConfiguracionGlobalResponse> AddConfiguracionGlobalAsync(AddConfiguracionGlobalRequest request);
         Task<ConfiguracionGlobalResponse> EditConfiguracionGlobalAsync(EditConfiguracionGlobalRequest request);
