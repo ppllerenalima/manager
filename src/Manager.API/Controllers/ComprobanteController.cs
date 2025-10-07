@@ -1,5 +1,6 @@
 ﻿using Manager.Domain.Requests.Comprobante;
 using Manager.Domain.Responses.ComprobanteResponses;
+using Manager.Domain.Services;
 using Manager.Domain.Services.Interfaces;
 
 namespace Manager.API.Controllers
@@ -136,6 +137,14 @@ namespace Manager.API.Controllers
                     Details = ex.Message
                 });
             }
+        }
+
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> UpdateGlosa(Guid id, EditComprobanteRequest request)
+        {
+            request.Id = id;
+            var result = await _comprobanteService.EditComprobanteAsync(request);
+            return Ok(result);
         }
     }
 }

@@ -2,6 +2,7 @@
 {
     public class ComprobanteResponse
     {
+        public Guid Id { get; set; }
         public string Ruc { get; set; }
         public string RazonSocial { get; set; }
         public string Periodo { get; set; }

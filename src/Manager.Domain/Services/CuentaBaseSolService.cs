@@ -36,7 +36,6 @@ namespace Manager.Domain.Services
             return _cuentaBaseSolMapper.Map<CuentaBaseSolResponse>(entity);
         }
 
-
         public async Task<CuentaBaseSolResponse> GetCuentaBaseSolAsync(GetCuentaBaseSolRequest request)
         {
             if (request?.Id == null) throw new ArgumentNullException();

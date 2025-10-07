@@ -1,4 +1,5 @@
-﻿using Manager.Domain.Requests.ConfiguracionGlobal;
+﻿using Manager.Domain.Requests.Comprobante;
+using Manager.Domain.Requests.ConfiguracionGlobal;
 using Manager.Domain.Requests.PerTributario;
 using Manager.Domain.Responses.ComprobanteResponses;
 using Manager.Domain.Responses.ConfiguracionGlobalResponses;
@@ -17,6 +18,7 @@ namespace Manager.Domain.Mappers
             CreateMap<EditClienteRequest, Cliente>().ReverseMap();
 
             CreateMap<ComprobanteResponse, Comprobante>().ReverseMap();
+            CreateMap<EditComprobanteRequest, Comprobante>().ReverseMap();
 
             CreateMap<ConfiguracionGlobalResponse, ConfiguracionGlobal>().ReverseMap();
             CreateMap<AddConfiguracionGlobalRequest, ConfiguracionGlobal>().ReverseMap();

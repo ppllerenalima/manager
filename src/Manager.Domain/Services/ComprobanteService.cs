@@ -1,4 +1,5 @@
-﻿using Manager.Domain.Services.Interfaces;
+﻿using Manager.Domain.Requests.Comprobante;
+using Manager.Domain.Services.Interfaces;
 using System.Collections.Concurrent;
 
 namespace Manager.Domain.Services
@@ -66,6 +67,34 @@ namespace Manager.Domain.Services
 
 
             return results.ToList();
+        }
+
+        public async Task<ComprobanteResponse> EditComprobanteAsync(EditComprobanteRequest request)
+        {
+            var existingRecord = await _comprobanteRepository.GetAsync(request.Id);
+
+            if (existingRecord == null)
+                throw new ArgumentException($"Comprobante con ID {request.Id} no existe.");
+
+            // Solo actualizas los campos que cambian
+            existingRecord.Glosa = request.Glosa;
+            existingRecord.TieneGlosa = request.TieneGlosa;
+
+            // Actualizas directamente el registro existente
+            _comprobanteRepository.UpdateAsync(existingRecord);
+            await _comprobanteRepository.UnitOfWork.SaveChangesAsync();
+
+            return _comprobanteMapper.Map<ComprobanteResponse>(existingRecord);
+
+            //var existingRecord = await _comprobanteRepository.GetAsync(request.Id);
+
+            //if (existingRecord == null) throw new ArgumentException($"Entity with {request.Id} is not present");
+
+            //var entity = _comprobanteMapper.Map<Comprobante>(request);
+            //var result = _comprobanteRepository.UpdateAsync(entity);
+
+            //await _comprobanteRepository.UnitOfWork.SaveChangesAsync();
+            //return _comprobanteMapper.Map<ComprobanteResponse>(result.Result);
         }
 
         private async Task<Comrpobante_GlosaResponse> ProcesarAsync(byte[] zipFile, Comprobante existinfRecord, CancellationToken cancellationToken)
