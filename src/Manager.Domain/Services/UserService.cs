@@ -1,5 +1,8 @@
-﻿using Manager.Domain.Services.Interfaces;
+﻿using AutoMapper;
+using Manager.Domain.Repositories;
+using Manager.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace Manager.Domain.Services
 {
@@ -192,6 +195,25 @@ namespace Manager.Domain.Services
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
+        }
+
+        public async Task<bool> ChangePasswordAsync(Guid id, ChangePasswordUserRequest request, CancellationToken cancellationToken)
+        {
+            return await _userRepository.ChangePasswordAsync(
+                id,
+                request.CurrentPassword,
+                request.NewPassword,
+                cancellationToken
+            );
+        }
+
+        public async Task<bool> ResetPasswordAsync(Guid id, string newPassword, CancellationToken cancellationToken)
+        {
+            return await _userRepository.ResetPasswordAsync(
+                id,
+                newPassword,
+                cancellationToken
+            );
         }
 
         private string GenerateSecurityToken(User request)

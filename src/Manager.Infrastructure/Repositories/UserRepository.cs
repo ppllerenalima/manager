@@ -99,5 +99,48 @@ namespace Manager.Infrastructure.Repositories
             var roles = await _userManager.GetRolesAsync(user); // devuelve IList<string>
             return roles.ToArray(); // convertimos a array si es necesario
         }
+
+        // 🔒 Cambiar contraseña (requiere contraseña actual)
+        public async Task<bool> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                throw new InvalidOperationException($"No se encontró el usuario con id {userId}");
+
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception($"No se pudo cambiar la contraseña: {errors}");
+            }
+
+            return true;
+        }
+
+        // 🔄 Resetear contraseña (sin necesidad de la actual)
+        public async Task<bool> ResetPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                throw new InvalidOperationException($"No se encontró el usuario con id {userId}");
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception($"No se pudo resetear la contraseña: {errors}");
+            }
+
+            return true;
+        }
+
     }
 }

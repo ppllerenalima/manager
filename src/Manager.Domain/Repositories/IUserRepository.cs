@@ -11,5 +11,7 @@ namespace Manager.Domain.Repositories
         Task<ICollection<User>> GetAsync(CancellationToken cancellationToken = default);
         Task<User> GetAsync(Guid id, CancellationToken cancellationToken = default);
         Task<string[]> GetRolesAsync(User user, CancellationToken cancellationToken = default);
+        Task<bool> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
+        Task<bool> ResetPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken = default);
     }
 }

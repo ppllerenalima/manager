@@ -1,4 +1,5 @@
 ﻿using Manager.Domain.Services.Interfaces;
+using System.Security.Claims;
 
 namespace Manager.API.Controllers
 {
@@ -77,6 +78,89 @@ namespace Manager.API.Controllers
         {
             await _userService.DeleteAsync(id);
             return NoContent();
+        }
+
+        [HttpPost("{id:guid}/change-password")]
+        public async Task<IActionResult> ChangePassword(Guid id, [FromBody] ChangePasswordUserRequest request, CancellationToken cancellationToken)
+        {
+            
+            try
+            {
+                // Obtener el nombre de usuario del token actual
+                var userName = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+
+                // (Opcional) Validar que el usuario autenticado sea el mismo que intenta cambiar su contraseña
+                // Si usás GUIDs en el token, podrías comparar ClaimTypes.NameIdentifier en lugar de Name
+                // var userIdFromToken = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+                // if (userIdFromToken != id.ToString()) return Forbid();
+
+                var result = await _userService.ChangePasswordAsync(id, request, cancellationToken);
+
+                if (!result)
+                    return BadRequest(new { success = false, message = "No se pudo cambiar la contraseña." });
+
+                return Ok(new { success = true, message = "Contraseña actualizada correctamente." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = $"Error al cambiar la contraseña: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("{id:guid}/reset-password")]
+        public async Task<IActionResult> ResetPassword(Guid id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Obtener el nombre de usuario del token actual
+                var userName = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+
+                // (Opcional) Validar que el usuario autenticado sea el mismo que intenta cambiar su contraseña
+                // var userIdFromToken = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+                // if (userIdFromToken != id.ToString()) return Forbid();
+
+                // Restablecer la contraseña con la clave por defecto
+                const string defaultPassword = "Aa123*";
+                var result = await _userService.ResetPasswordAsync(id, defaultPassword, cancellationToken);
+
+                if (!result)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "No se pudo restablecer la contraseña. Intente nuevamente o contacte al administrador del sistema."
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "La contraseña se restableció correctamente con la clave por defecto."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = $"No se encontró el usuario especificado: {ex.Message}"
+                });
+            }
+            catch (Exception ex)
+            {
+                // Loguear la excepción si existe un logger configurado
+                // _logger.LogError(ex, "Error al restablecer contraseña del usuario {UserId}", id);
+
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    success = false,
+                    message = $"Ocurrió un error inesperado al restablecer la contraseña: {ex.Message}"
+                });
+            }
         }
     }
 }
