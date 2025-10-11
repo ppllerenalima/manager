@@ -1,4 +1,4 @@
-using Manager.API.Filters;
+﻿using Manager.API.Filters;
 using Manager.API.ResponseModels;
 using Manager.Domain.Requests.Cliente;
 using Manager.Domain.Responses;
@@ -22,33 +22,39 @@ namespace Manager.API.Controllers
         public async Task<IActionResult> Get(
             [FromQuery] string? search = "",
             [FromQuery] int pageSize = 10,
-            [FromQuery] int pageIndex = 0)
+            [FromQuery] int pageIndex = 0,
+            [FromQuery] Guid? grupoId = null)
         {
-            // 1. Obtiene todos los clientes filtrados (si corresponde)
-            var result = await _clienteService.GetClientesAsync(search ?? "");
+            // 1️⃣ Obtener lista filtrada del servicio
+            var clientes = await _clienteService.GetClientesAsync(search ?? "");
 
-            // 2. Total de registros filtrados
-            var totalClientes = result.Count();
+            if (clientes == null)
+                return NotFound("No se encontraron clientes.");
 
-            // 3. Paginaci�n
-            var clientesOnPage = result
+            // 2️⃣ Aplicar filtro por grupo (solo si se envía)
+            if (grupoId.HasValue && grupoId.Value != Guid.Empty)
+                clientes = clientes.Where(c => c.GrupoId == grupoId.Value).ToList();
+
+            // 3️⃣ Total de registros después del filtro
+            var total = clientes.Count();
+
+            // 4️⃣ Paginación
+            var items = clientes
                 .OrderBy(c => c.Id)
-                .Skip(pageSize * pageIndex)
+                .Skip(pageIndex * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            // 4. Construye el modelo paginado
+            // 5️⃣ Construcción del modelo de respuesta
             var model = new PaginatedResponseModel<ClienteResponse>(
                 pageIndex,
                 pageSize,
-                totalClientes,
-                clientesOnPage
+                total,
+                items
             );
 
-            // 5. Devuelve respuesta HTTP 200 con el modelo
             return Ok(model);
         }
-
 
         [HttpGet("{Id:Guid}")]
         [ClienteExists]
