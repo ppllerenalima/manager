@@ -20,6 +20,13 @@
                 .WithMany(g => g.Clientes)
                 .HasForeignKey(c => c.GrupoId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Relación 1:N User → Clientes
+            builder
+                .HasOne(c => c.User)
+                .WithMany(g => g.Clientes)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

@@ -1,5 +1,3 @@
-using Manager.Domain.Services.Interfaces;
-
 namespace Manager.Domain.Services
 {
     public class GrupoService : IGrupoService
@@ -21,11 +19,28 @@ namespace Manager.Domain.Services
             _logger = logger;
         }
 
-        public async Task<IEnumerable<GrupoResponse>> GetGruposAsync()
+        public async Task<(IEnumerable<GrupoResponse> Items, int Total)> GetGruposAsync(
+            string? search,
+            int pageIndex,
+            int pageSize)
         {
-            var result = await _grupoRepository.GetAsync();
-            return result
-                .Select(x => _grupoMapper.Map<GrupoResponse>(x));
+            // Trae el IQueryable ya filtrado
+            var queryable = _grupoRepository.Get(
+                x => string.IsNullOrEmpty(search) || x.Descripcion.Contains(search),
+                x => x.Descripcion
+            );
+
+            var total = await queryable.CountAsync();
+
+            // Paginación eficiente
+            var items = await queryable
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var mapped = items.Select(x => _grupoMapper.Map<GrupoResponse>(x));
+
+            return (mapped, total);
         }
 
         public async Task<GrupoResponse> GetGrupoAsync(GetGrupoRequest request)

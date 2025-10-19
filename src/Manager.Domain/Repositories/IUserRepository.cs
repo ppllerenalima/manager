@@ -9,6 +9,7 @@ namespace Manager.Domain.Repositories
         Task<bool> UpdateUserRoleAsync(User user, string newRole, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
         Task<ICollection<User>> GetAsync(CancellationToken cancellationToken = default);
+        IQueryable<User> Get<TKey>(Expression<Func<User, bool>>? predicate = null, Expression<Func<User, TKey>>? orderBy = null, bool descending = false);
         Task<User> GetAsync(Guid id, CancellationToken cancellationToken = default);
         Task<string[]> GetRolesAsync(User user, CancellationToken cancellationToken = default);
         Task<bool> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);

@@ -22,7 +22,10 @@
 
         public async Task<ICollection<TEntity>> GetAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            return await _context.Set<TEntity>().Where(predicate).AsNoTracking().ToListAsync(cancellationToken);
+            return await _context.Set<TEntity>()
+                .Where(predicate)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<ICollection<TEntity>> GetAsync<Tkey>(
@@ -36,6 +39,25 @@
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
+
+        public IQueryable<TEntity> Get<TKey>(
+            Expression<Func<TEntity, bool>>? predicate,
+            Expression<Func<TEntity, TKey>>? orderBy,
+            bool descending)
+        {
+            var query = _context.Set<TEntity>().AsNoTracking();
+
+            if (predicate != null)
+                query = query.Where(predicate);
+
+            if (orderBy != null)
+                query = descending
+                    ? query.OrderByDescending(orderBy)
+                    : query.OrderBy(orderBy);
+
+            return query;
+        }
+
 
         public virtual async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
         {

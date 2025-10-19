@@ -1,4 +1,6 @@
 ﻿using Manager.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Manager.Infrastructure.Repositories
 {
@@ -82,6 +84,29 @@ namespace Manager.Infrastructure.Repositories
                     .ThenInclude(ur => ur.Role) // 👈 Aquí traes el rol
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
+        }
+
+        public IQueryable<User> Get<TKey>(
+            Expression<Func<User, bool>>? predicate,
+            Expression<Func<User, TKey>>? orderBy,
+            bool descending)
+        {
+            var query = _userManager
+                .Users
+                .Include(u => u.Persona)
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role) // 👈 Aquí traes el rol
+                .AsNoTracking();
+
+            if (predicate is not null)
+                query = query.Where(predicate);
+
+            if (orderBy is not null)
+                query = descending
+                    ? query.OrderByDescending(orderBy)
+                    : query.OrderBy(orderBy);
+
+            return query;
         }
 
         public async Task<User> GetAsync(Guid id, CancellationToken cancellationToken)

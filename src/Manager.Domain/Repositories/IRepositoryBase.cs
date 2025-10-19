@@ -1,7 +1,6 @@
 ﻿namespace Manager.Domain.Repositories
 {
     public interface IRepositoryBase<TEntity> : IRepository where TEntity : EntityBase
-    //public interface IRepositoryBase<TEntity> where TEntity : EntityBase
     {
         Task<ICollection<TEntity>> GetAsync(CancellationToken cancellationToken = default);
 
@@ -15,6 +14,11 @@
             Expression<Func<TEntity, bool>> predicate,
             Expression<Func<TEntity, Tkey>> orderBy,
             CancellationToken cancellationToken = default);
+
+        IQueryable<TEntity> Get<TKey>(
+           Expression<Func<TEntity, bool>>? predicate = null,
+           Expression<Func<TEntity, TKey>>? orderBy = null,
+           bool descending = false);
 
         Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 

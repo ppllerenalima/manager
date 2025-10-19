@@ -1,4 +1,4 @@
-﻿using Manager.Domain.Services.Interfaces;
+﻿using Azure.Core;
 
 namespace Manager.API.Controllers
 {
@@ -14,20 +14,13 @@ namespace Manager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] PaginationRequestModel pagination)
+        public async Task<IActionResult> Get([FromQuery] PaginationRequestModel request)
         {
-            pagination ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
+            request ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
 
-            var result = await _grupoService.GetGruposAsync();
+            var (itemsOnPage, total) = await _grupoService.GetGruposAsync(request.Search, request.PageIndex, request.PageSize);
 
-            var totalGrupos = result.Count();
-
-            var itemsOnPage = result
-                .OrderBy(c => c.Descripcion)
-                .Skip(pagination.PageSize * pagination.PageIndex)
-                .Take(pagination.PageSize);
-
-            var model = new PaginatedResponseModel<GrupoResponse>(pagination.PageIndex, pagination.PageSize, totalGrupos, itemsOnPage);
+            var model = new PaginatedResponseModel<GrupoResponse>(request.PageIndex, request.PageSize, total, itemsOnPage);
 
             return Ok(model);
         }

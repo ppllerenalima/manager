@@ -1,6 +1,6 @@
 ﻿namespace Manager.Domain.Responses
 {
-    public class DescargarArchivoReporteResponse
+    public class    DescargarArchivoReporteResponse
     {
         public bool EsExito { get; set; }
         public int StatusCode { get; set; }

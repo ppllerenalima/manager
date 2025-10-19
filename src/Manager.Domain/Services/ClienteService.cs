@@ -1,83 +1,89 @@
-using Manager.Domain.Services.Interfaces;
-
 namespace Manager.Domain.Services
 {
     public class ClienteService : IClienteService
     {
-        private readonly IMapper _mapper;
-        private readonly IClienteRepository _repo;
+        private readonly IMapper _clienteMapper;
+        private readonly IClienteRepository _clienteRepository;
         private readonly ILogger<ClienteService> _logger;
 
         public ClienteService(IClienteRepository clienteRepository, IMapper clienteMapper, ILogger<ClienteService> logger)
         {
-            _repo = clienteRepository;
-            _mapper = clienteMapper;
+            _clienteRepository = clienteRepository;
+            _clienteMapper = clienteMapper;
             _logger = logger;
         }
 
-        public async Task<IEnumerable<ClienteResponse>> GetClientesAsync(string search)
+        public async Task<(IEnumerable<ClienteResponse> Items, int Total)> GetClientesAsync(
+            Guid? grupoId,
+            Guid? userId,
+            string? search,
+            int pageIndex,
+            int pageSize)
         {
-            var result = await _repo.GetAsync(search);
-            return result
-                .Select(x => _mapper.Map<ClienteResponse>(x));
+            // Trae el IQueryable ya filtrado
+            var queryable = _clienteRepository.Get(
+                x => string.IsNullOrEmpty(search) || x.Razonsocial.Contains(search) || x.Ruc.Contains(search),
+                x => x.Razonsocial
+            );
+
+            if (grupoId is not null) queryable = queryable.Where(z => z.GrupoId == grupoId);
+
+            if (userId is not null) queryable = queryable.Where(z => z.UserId == userId);
+
+            var total = await queryable.CountAsync();
+
+            // Paginación eficiente
+            var items = await queryable
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var mapped = items.Select(x => _clienteMapper.Map<ClienteResponse>(x));
+
+            return (mapped, total);
         }
 
         public async Task<ClienteResponse> GetClienteAsync(GetClienteRequest request)
         {
             if (request?.Id == null) throw new ArgumentNullException();
-            var entity = await _repo.GetAsync(request.Id);
-            return _mapper.Map<ClienteResponse>(entity);
+            var entity = await _clienteRepository.GetAsync(request.Id);
+            return _clienteMapper.Map<ClienteResponse>(entity);
         }
 
         public async Task<ClienteResponse> AddClienteAsync(AddClienteRequest request)
         {
-            var cliente = _mapper.Map<Cliente>(request);
+            var cliente = _clienteMapper.Map<Cliente>(request);
 
-            var result = _repo.Add(cliente);
-            await _repo.UnitOfWork.SaveChangesAsync();
+            var result = _clienteRepository.AddAsync(cliente);
+            await _clienteRepository.UnitOfWork.SaveChangesAsync();
 
-            return _mapper.Map<ClienteResponse>(result);
+            return _clienteMapper.Map<ClienteResponse>(result.Result);
         }
 
         public async Task<ClienteResponse> EditClienteAsync(EditClienteRequest request)
         {
-            var existingRecord = await _repo.GetAsync(request.Id);
+            var existingRecord = await _clienteRepository.GetAsync(request.Id);
 
             if (existingRecord == null) throw new ArgumentException($"Entity with {request.Id} is not present");
 
-            var entity = _mapper.Map<Cliente>(request);
-            var result = _repo.Update(entity);
+            var entity = _clienteMapper.Map<Cliente>(request);
+            var result = _clienteRepository.UpdateAsync(entity);
 
-            await _repo.UnitOfWork.SaveChangesAsync();
-            return _mapper.Map<ClienteResponse>(result);
+            await _clienteRepository.UnitOfWork.SaveChangesAsync();
+            return _clienteMapper.Map<ClienteResponse>(result.Result);
         }
 
         public async Task<ClienteResponse> DeleteClienteAsync(DeleteClienteRequest request)
         {
             if (request?.Id == null) throw new ArgumentNullException();
 
-            var result = await _repo.GetAsync(request.Id);
+            var result = await _clienteRepository.GetAsync(request.Id);
             result.IsInactive = true;
 
-            _repo.Update(result);
-            await _repo.UnitOfWork.SaveChangesAsync();
+            _clienteRepository.UpdateAsync(result);
+            await _clienteRepository.UnitOfWork.SaveChangesAsync();
 
-            return _mapper.Map<ClienteResponse>(result);
+            return _clienteMapper.Map<ClienteResponse>(result);
         }
-
-        //public async Task<SunatAuthResponse> ObtenerTokenAsync(Guid clienteId)
-        //{
-        //    var cliente = await _repo.GetAsync(clienteId);
-        //    if (cliente == null)
-        //        throw new Exception("Cliente no encontrado");
-
-        //    var authRequest = _mapper.ToSunatAuthRequest(cliente);
-        //    return await _sireComprasService.AccessTokenAsync(authRequest);
-        //}
-
-        //public async Task<string> AceptarPropuestaAsync(string token, string periodo)
-        //{
-        //    return await _sireComprasService.AceptarPropuestaAsync(token, periodo);
-        //}
     }
 }

@@ -18,20 +18,13 @@ namespace Manager.API.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] PaginationRequestModel pagination)
+        public async Task<IActionResult> Get([FromQuery] PaginationRequestModel request)
         {
-            pagination ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
+            request ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
 
-            var result = await _userService.GetUserAsync();
+            var (itemsOnPage, total) = await _userService.GetUsersAsync(request.Search, request.PageIndex, request.PageSize);
 
-            var totalGrupos = result.Count();
-
-            var itemsOnPage = result
-                .OrderBy(c => c.NombreCompleto)
-                .Skip(pagination.PageSize * pagination.PageIndex)
-                .Take(pagination.PageSize);
-
-            var model = new PaginatedResponseModel<UserResponse>(pagination.PageIndex, pagination.PageSize, totalGrupos, itemsOnPage);
+            var model = new PaginatedResponseModel<UserResponse>(request.PageIndex, request.PageSize, total, itemsOnPage);
 
             return Ok(model);
         }

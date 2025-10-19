@@ -19,7 +19,7 @@ namespace Manager.Reporting.Api.Controllers
                 MaxReceivedMessageSize = 50_000_000
             };
 
-            var endpoint = new EndpointAddress("http://192.168.1.38/ReportServer/ReportExecution2005.asmx");
+            var endpoint = new EndpointAddress("http://192.168.1.254/ReportServer/ReportExecution2005.asmx");
 
             _client = new ReportExecutionServiceSoapClient(binding, endpoint);
 

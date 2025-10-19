@@ -1,11 +1,4 @@
-﻿using Manager.API.Filters;
-using Manager.API.ResponseModels;
-using Manager.Domain.Requests.Cliente;
-using Manager.Domain.Responses;
-using Manager.Domain.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
-
-namespace Manager.API.Controllers
+﻿namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -19,39 +12,13 @@ namespace Manager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get(
-            [FromQuery] string? search = "",
-            [FromQuery] int pageSize = 10,
-            [FromQuery] int pageIndex = 0,
-            [FromQuery] Guid? grupoId = null)
+        public async Task<IActionResult> Get([FromQuery] Guid? grupoId, [FromQuery] Guid? userId, [FromQuery] PaginationRequestModel request)
         {
-            // 1️⃣ Obtener lista filtrada del servicio
-            var clientes = await _clienteService.GetClientesAsync(search ?? "");
+            request ??= new PaginationRequestModel(); // Si es null, crea con valores por defecto
 
-            if (clientes == null)
-                return NotFound("No se encontraron clientes.");
+            var (itemsOnPage, total) = await _clienteService.GetClientesAsync(grupoId, userId, request.Search, request.PageIndex, request.PageSize);
 
-            // 2️⃣ Aplicar filtro por grupo (solo si se envía)
-            if (grupoId.HasValue && grupoId.Value != Guid.Empty)
-                clientes = clientes.Where(c => c.GrupoId == grupoId.Value).ToList();
-
-            // 3️⃣ Total de registros después del filtro
-            var total = clientes.Count();
-
-            // 4️⃣ Paginación
-            var items = clientes
-                .OrderBy(c => c.Id)
-                .Skip(pageIndex * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // 5️⃣ Construcción del modelo de respuesta
-            var model = new PaginatedResponseModel<ClienteResponse>(
-                pageIndex,
-                pageSize,
-                total,
-                items
-            );
+            var model = new PaginatedResponseModel<ClienteResponse>(request.PageIndex, request.PageSize, total, itemsOnPage);
 
             return Ok(model);
         }

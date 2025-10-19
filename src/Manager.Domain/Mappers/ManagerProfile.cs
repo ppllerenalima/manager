@@ -1,9 +1,4 @@
 ﻿using Manager.Domain.Requests.Comprobante;
-using Manager.Domain.Requests.ConfiguracionGlobal;
-using Manager.Domain.Requests.PerTributario;
-using Manager.Domain.Responses.ComprobanteResponses;
-using Manager.Domain.Responses.ConfiguracionGlobalResponses;
-using Manager.Domain.Responses.PerTributarioResponses;
 
 namespace Manager.Domain.Mappers
 {
@@ -11,9 +6,7 @@ namespace Manager.Domain.Mappers
     {
         public ManagerProfile()
         {
-            CreateMap<Cliente, ClienteResponse>()
-                .ForMember(dest => dest.grupo, opt => opt.MapFrom(src => src.Grupo.Descripcion))
-                .ReverseMap();
+            CreateMap<Cliente, ClienteResponse>().ReverseMap();
             CreateMap<AddClienteRequest, Cliente>().ReverseMap();
             CreateMap<EditClienteRequest, Cliente>().ReverseMap();
 

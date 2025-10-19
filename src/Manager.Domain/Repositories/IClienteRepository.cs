@@ -1,11 +1,7 @@
 ﻿namespace Manager.Domain.Repositories
 {
-    public interface IClienteRepository : IRepository
+    public interface IClienteRepository : IRepositoryBase<Cliente>
     {
-        Task<IEnumerable<Cliente>> GetAsync(string search);
-        Task<Cliente> GetAsync(Guid Id);
-        Cliente Add(Cliente item);
-        Cliente Update(Cliente item);
-        Cliente Delete(Cliente item);
+        
     }
 }

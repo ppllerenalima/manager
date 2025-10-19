@@ -2,6 +2,7 @@
 using Manager.Domain.Repositories;
 using Manager.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Manager.Domain.Services
@@ -30,12 +31,27 @@ namespace Manager.Domain.Services
             return _userMapper.Map<UserResponse>(result);
         }
 
-        public async Task<IEnumerable<UserResponse>> GetUserAsync(CancellationToken cancellationToken)
+        public async Task<(IEnumerable<UserResponse> Items, int Total)> GetUsersAsync(
+            string? search,
+            int pageIndex,
+            int pageSize)
         {
-            var result = await _userRepository.GetAsync(cancellationToken);
+            // Trae el IQueryable ya filtrado
+            var queryable = _userRepository.Get<User>(
+                x => string.IsNullOrEmpty(search) || x.Persona.ApePaterno.Contains(search) || x.Persona.ApeMaterno.Contains(search) || x.Persona.Nombre.Contains(search) || x.UserName.Contains(search)
+            );
 
-            return result
-                .Select(x => _userMapper.Map<UserResponse>(x));
+            var total = await queryable.CountAsync();
+
+            // Paginación eficiente
+            var items = await queryable
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var mapped = items.Select(x => _userMapper.Map<UserResponse>(x));
+
+            return (mapped, total);
         }
 
         public async Task<TokenResponse> SignInAsync(SignInRequest request, CancellationToken cancellationToken)

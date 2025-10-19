@@ -3,6 +3,8 @@ namespace Manager.Domain.Requests.Cliente
     public class EditClienteRequest
     {
         public Guid Id { get; set; }
+        public bool IsInactive { get; set; } = false;
+
         public string Ruc { get; set; }
         public string Razonsocial { get; set; }
         public string Numero { get; set; }
@@ -14,7 +16,8 @@ namespace Manager.Domain.Requests.Cliente
         public string Username { get; set; }
         public string Password { get; set; }
         public DateTime FechaRegistro { get; set; } = DateTime.Now;
-        public bool IsInactive { get; set; } = false;
+
+        public Guid UserId { get; set; }
         public Guid GrupoId { get; set; }
     }
 }

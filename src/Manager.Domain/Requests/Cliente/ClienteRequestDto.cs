@@ -1,6 +1,6 @@
-namespace Manager.Domain.Requests.Cliente
+﻿namespace Manager.Domain.Requests.Cliente
 {
-    public class AddClienteRequest
+    public class ClienteRequestDto
     {
         public bool IsInactive { get; set; } = false;
 

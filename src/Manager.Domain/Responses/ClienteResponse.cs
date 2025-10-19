@@ -3,6 +3,8 @@ namespace Manager.Domain.Responses
     public class ClienteResponse
     {
         public Guid Id { get; set; }
+        public bool IsInactive { get; set; }
+
         public string Ruc { get; set; }
         public string Razonsocial { get; set; }
         public string Numero { get; set; }
@@ -14,8 +16,8 @@ namespace Manager.Domain.Responses
         public string Username { get; set; }
         public string Password { get; set; }
         public DateTime FechaRegistro { get; set; }
-        public bool IsInactive { get; set; }
+
+        public Guid UserId { get; set; }
         public Guid GrupoId { get; set; }
-        public string grupo { get; set; }
     }
 }
