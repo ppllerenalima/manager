@@ -11,6 +11,7 @@ services:
       - my_network
     ports:
       - 5000:5000
+    restart: unless-stopped   # 👈 Agrega esto
     # depends_on:
     #   manager_db:
     #     condition: service_healthy
@@ -26,6 +27,7 @@ services:
       - my_network
     ports:
       - 5001:5000  # 👈 expone en tu host (5001) la API de Reporting (puerto interno 5000)
+    restart: unless-stopped   # 👈 Agrega esto
     depends_on:
       - manager_api   # 👈 si depende de la API principal
 
@@ -60,6 +62,7 @@ services:
       - "4200:80" # Angular disponible en http://localhost:4200
     networks:
       - my_network
+    restart: unless-stopped   # 👈 También
     depends_on:
       - manager_api
   
