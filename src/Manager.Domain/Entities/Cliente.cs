@@ -12,6 +12,7 @@
         public string ClientSecret { get; set; } = default!;
         public string Username { get; set; } = default!;
         public string Password { get; set; } = default!;
+        public bool tienePermiso { get; set; } = false;
         public DateTime Dt_registro { get; set; }
 
         public Token Token { get; set; } = default!;

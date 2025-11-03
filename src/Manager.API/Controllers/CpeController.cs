@@ -23,75 +23,68 @@ namespace Manager.API.Controllers
             _cuentaBaseSolService = cuentaBaseSolService;
         }
 
+        [HttpPost("descargar-zip")]
+        public async Task<IActionResult> DescargarZip_Postman([FromQuery] Guid clienteId, [FromBody] DescargarZipRequest request)
+        {
+            // 1️⃣ Obtener token limpio
+            var token = await _tokenService.GetOrGenerateActiveTokenAsync(clienteId);
+
+            // 2️⃣ Ejecutar el proceso con fallback (ControlCpe → ConsultaCpe)
+            var result = await _cpeService.DescargarZipAsync(token.AccessToken, request);
+
+            // 3️⃣ Validar si la operación fue exitosa
+            if (!result.Success || result.Data == null)
+                return StatusCode(result.StatusCode, result); // Devuelve el mismo response estándar
+
+            // 4️⃣ Preparar el archivo descargado
+            var fileName = $"{result.Data.NombreArchivo}.zip";
+            return File(result.Data.Archivo, "application/zip", fileName);
+        }
+
         /// <summary>
-        /// Descarga el archivo ZIP asociado a un comprobante electrónico,
-        /// utilizando los servicios de la SUNAT (ControlCPE y ConsultaCPE).
+        /// Descarga el archivo ZIP o PDF asociado a un comprobante electrónico,
+        /// consultando los servicios de SUNAT según los parámetros enviados.
         /// </summary>
+        /// <param name="clienteId">Identificador único del cliente solicitante.</param>
         /// <param name="request">
-        /// Objeto con los parámetros necesarios:
-        /// - <c>RucEmisor</c>: RUC del emisor del comprobante.
-        /// - <c>TipoComprobante</c>: Tipo de CPE (01=Factura, 03=Boleta, etc.).
-        /// - <c>Serie</c>: Serie del comprobante.
-        /// - <c>Numero</c>: Número del comprobante.
-        /// - <c>Tipo</c>: Tipo de archivo a descargar (01=PDF, 02=XML, etc.).
+        /// Objeto que contiene los datos necesarios del comprobante a descargar.
         /// </param>
         /// <returns>
-        /// Un resultado HTTP con los siguientes posibles estados:
-        /// - <c>200 OK</c>: Descarga exitosa. Devuelve el archivo en base64 junto con metadatos.
-        /// - <c>400 Bad Request</c>: Error en los parámetros de entrada.
-        /// - <c>500 Internal Server Error</c>: Error inesperado o fallo en los servicios de SUNAT.
+        /// Retorna un objeto <see cref="IActionResult"/> con el resultado de la operación:
+        /// - <c>200 OK</c> si la descarga se realiza correctamente.
+        /// - <c>400 Bad Request</c> si los parámetros son inválidos o la solicitud es nula.
+        /// - <c>500 Internal Server Error</c> si ocurre un error durante el proceso.
         /// </returns>
-        [HttpPost("DescargarZip")]
-        public async Task<IActionResult> DescargarZip([FromBody] DescargarZipRequest request)
+        /// <remarks>
+        /// Este método obtiene un token activo del cliente, consulta el servicio de descarga
+        /// y devuelve el archivo procesado en formato PDF o ZIP.
+        /// </remarks>
+        [HttpPost("descargar-zip-pdf")]
+        public async Task<IActionResult> DescargarZip_Pdf([FromQuery] Guid clienteId, [FromBody] DescargarZipRequest request)
         {
             if (request == null)
             {
-                return BadRequest(new DescargarZipResponse
-                {
-                    EsExito = false,
-                    StatusCode = 400,
-                    Errores = new List<ErrorDescargarZipResponse>
-            {
-                new ErrorDescargarZipResponse
-                {
-                    status = "REQ_NULL",
-                    message = "La solicitud no puede ser nula."
-                }
-            }
-                });
+                return StatusCode(400,
+                    ResponseFactory.Error<DescargarZipResponse>(
+                        "La solicitud no puede ser nula.",
+                        "REQ_NULL",
+                        400
+                    )
+                );
             }
 
             try
             {
-                // 1️⃣ Obtener cuenta y token
-                var cuentaBaseSol = await _cuentaBaseSolService.GetCuentaBaseSolFirstOrDefaultAsync();
-                if (cuentaBaseSol == null)
+                // 1️⃣ Obtener token válido del cliente
+                var token = await _tokenService.GetOrGenerateActiveTokenAsync(clienteId);
+
+                // 2️⃣ Descargar desde los servicios SUNAT (con fallback)
+                var response = await _cpeService.DescargarPorConsultaCpeAsync(token.AccessToken, request);
+
+                // 3️⃣ Retornar archivo o error
+                if (response.Success)
                 {
-                    return BadRequest(new DescargarZipResponse
-                    {
-                        EsExito = false,
-                        StatusCode = 400,
-                        Errores = new List<ErrorDescargarZipResponse>
-                {
-                    new ErrorDescargarZipResponse
-                    {
-                        status = "NO_CUENTA",
-                        message = "No se encontró configuración de cuenta BaseSol."
-                    }
-                }
-                    });
-                }
-
-                var token = await _tokenBaseService.GetOrGenerateActiveTokenBaseAsync(cuentaBaseSol.Id);
-
-                // 2️⃣ Descargar usando la lógica de fallback (ControlCpe → ConsultaCpe)
-                var response = await _cpeService.DescargarZipAsync(token.AccessToken, request);
-
-                // 3️⃣ Responder según éxito o error
-                if (response.EsExito)
-                {
-
-                    return ProcesarPdfDesdeZip(response);
+                    return ProcesarPdfDesdeZip(response.Data);
                 }
 
                 return StatusCode(response.StatusCode > 0 ? response.StatusCode : 500, response);
@@ -99,21 +92,56 @@ namespace Manager.API.Controllers
             catch (Exception ex)
             {
                 // 4️⃣ Manejo global de excepciones
-                return StatusCode(500, new DescargarZipResponse
-                {
-                    EsExito = false,
-                    StatusCode = 500,
-                    Errores = new List<ErrorDescargarZipResponse>
-            {
-                new ErrorDescargarZipResponse
-                {
-                    status = "EX",
-                    message = ex.Message
-                }
-            }
-                });
+                return StatusCode(
+                    500,
+                    ResponseFactory.Error<DescargarZipResponse>(
+                        $"Error inesperado: {ex.Message}",
+                        "EX",
+                        500
+                    )
+                );
             }
         }
+
+        /// <summary>
+        /// Actualiza los permisos de una aplicación registrada ante SUNAT.
+        /// </summary>
+        /// <remarks>
+        /// Este endpoint envía una solicitud HTTP PUT al servicio de SUNAT para actualizar los
+        /// recursos autorizados de una aplicación.
+        /// 
+        /// Se debe pasar el token de autenticación (Bearer) y los datos de la aplicación
+        /// mediante parámetros de consulta (query string).
+        /// 
+        /// Ejemplo de uso:
+        /// PUT /api/cpe/actualizar-permisos?token={token}&id={idApp}&nomApp={nombre}&desUrlApp={url}
+        /// </remarks>
+        /// <param name="token">Token JWT emitido por SUNAT (autorización tipo Bearer).</param>
+        /// <param name="request">Objeto con los datos de la aplicación que se desea actualizar.</param>
+        /// <returns>
+        /// Retorna un objeto <see cref="BaseResponseGeneric{T}"/> con el resultado de la operación.
+        /// - <c>Success = true</c> si la actualización fue exitosa.
+        /// - <c>Success = false</c> si ocurrió un error al comunicarse con SUNAT.
+        /// </returns>
+        [HttpPut("actualizar-permisos")]
+        public async Task<IActionResult> ActualizarPermisos(
+            [FromQuery] string token,
+            [FromQuery] ActualizarPermisosRequest request)
+        {
+            try
+            {
+                // 🔹 Llamar al servicio que hace el PUT a SUNAT
+                var response = await _cpeService.ActualizarPermisosAsync(token, request);
+
+                // 🔹 Retornar el resultado al cliente
+                return StatusCode(response.StatusCode, response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ResponseFactory.Error<string>(ex.Message, "EXCEPTION", 500));
+            }
+        }
+
 
         private IActionResult ProcesarPdfDesdeZip(DescargarZipResponse result)
         {
@@ -126,7 +154,7 @@ namespace Manager.API.Controllers
                     e.FullName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
 
                 if (entry == null)
-                    return ErrorResponse(404, "NO_PDF", "No se encontró un PDF dentro del ZIP.");
+                    return StatusCode(404, ResponseFactory.Error<DescargarZipResponse>("No se encontró un PDF dentro del ZIP.", "NO_PDF", 404));
 
                 using var entryStream = entry.Open();
                 using var ms = new MemoryStream();
@@ -137,152 +165,8 @@ namespace Manager.API.Controllers
             }
             catch (Exception ex)
             {
-                return ErrorResponse(500, "EX", ex.Message);
+                return StatusCode(500, ResponseFactory.Error<DescargarZipResponse>(ex.Message, "EX", 500));
             }
         }
-
-        private IActionResult ErrorResponse(int statusCode, string status, string message)
-        {
-            return StatusCode(statusCode, new DescargarZipResponse
-            {
-                EsExito = false,
-                StatusCode = statusCode,
-                Errores = new List<ErrorDescargarZipResponse>
-                {
-                    new ErrorDescargarZipResponse { status = status, message = message }
-                }
-            });
-        }
-
-
-        //[HttpPost("status-cdr")]
-        //public async Task<IActionResult> StatusCdr([FromBody] ConsultarCpeRequest request)
-        //{
-        //    var result = await _cpeService.StatusCdrAsync(request);
-        //    return Ok(result);
-        //}
-
-        //[HttpPost("controlcpe-consultaxml")]
-        //public async Task<IActionResult> ControlCpeConsultaXml([FromBody] DescargarZipRequest request)
-        //{
-        //    // El token lo recuperas desde el contexto si lo necesitas
-        //    var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-
-        //    var result = await _cpeService.ControlCpeConsultaXmlAsync(token, request);
-        //    return Ok(result);
-        //}
-
-        //[HttpPost("consultacpe-comprobante")]
-        //public async Task<IActionResult> ConsultaCpeComprobante([FromBody] ConsultaCpeRequest request)
-        //{
-        //    // 1. Obtener token válido
-        //    var token = await _tokenService.GetOrGenerateActiveTokenAsync(request.clienteId);
-
-        //    var result = await _cpeService.ConsultaCpeComprobanteAsync(token.AccessToken, new DescargarZipRequest
-        //    {
-        //        RucEmisor = request.RucEmisor,
-        //        TipoComprobante = request.TipoComprobante,
-        //        Serie = request.Serie,
-        //        Numero = request.Numero,
-        //        Tipo = request.Tipo
-        //    });
-
-        //    return Ok(result);
-        //}
-
-        //[HttpPost("consultacpe-unificado")]
-        //public async Task<IActionResult> ConsultaCpeUnificado([FromBody] ConsultaCpeRequest request)
-        //{
-        //    var cuentaBaseSol = await _cuentaBaseSolService.GetCuentaBaseSolFirstOrDefaultAsync();
-
-        //    // 1. Obtener token válido
-        //    var token = await _tokenBaseService.GetOrGenerateActiveTokenBaseAsync(cuentaBaseSol.Id);
-
-        //    // 1️⃣ Primer intento: ControlCpeConsultaXml
-        //    var respXml = await _cpeService.ControlCpeConsultaXmlAsync(token.AccessToken, new DescargarZipRequest
-        //    {
-        //        RucEmisor = request.RucEmisor,
-        //        TipoComprobante = request.TipoComprobante,
-        //        Serie = request.Serie,
-        //        Numero = request.Numero
-        //    });
-
-        //    if (respXml.EsExito)
-        //    {
-        //        return Ok(new DescargarZipResponse
-        //        {
-        //            EsExito = true,
-        //            StatusCode = respXml.StatusCode,
-        //            Archivo = respXml.Archivo,
-        //            NombreArchivo = respXml.NombreArchivo
-        //        });
-        //    }
-
-        //    // 2️⃣ Segundo intento: ConsultaCpeComprobante
-        //    var respComprobante = await _cpeService.ConsultaCpeComprobanteAsync(token.AccessToken, new DescargarZipRequest
-        //    {
-        //        RucEmisor = request.RucEmisor,
-        //        TipoComprobante = request.TipoComprobante,
-        //        Serie = request.Serie,
-        //        Numero = request.Numero,
-        //        Tipo = "02"
-        //    });
-
-        //    if (respComprobante.EsExito)
-        //    {
-        //        return Ok(new DescargarZipResponse
-        //        {
-        //            EsExito = true,
-        //            StatusCode = respComprobante.StatusCode,
-        //            Archivo = respComprobante.Archivo,
-        //            NombreArchivo = respComprobante.NombreArchivo
-        //        });
-        //    }
-
-        //    // 3️⃣ Si ambos fallan, unificamos errores
-        //    var errores = new List<ErrorConsultaCpeResponse>();
-
-        //    if (respXml.Errores != null)
-        //        errores.AddRange(respXml.Errores.Select(e => new ErrorConsultaCpeResponse
-        //        {
-        //            status = e.status,
-        //            message = e.message
-        //        }));
-
-        //    if (respComprobante.Errores != null)
-        //        errores.AddRange(respComprobante.Errores.Select(e => new ErrorConsultaCpeResponse
-        //        {
-        //            status = e.status,
-        //            message = e.message
-        //        }));
-
-        //    return Ok(new DescargarZipResponse
-        //    {
-        //        EsExito = false,
-        //        StatusCode = respComprobante.StatusCode != 0 ? respComprobante.StatusCode : respXml.StatusCode,
-        //        Errores = errores
-        //    });
-        //}
-
-        //[HttpPost("consultacpe-lote")]
-        //public async Task<IActionResult> ConsultaCpeLote([FromBody] List<ConsultaCpeRequest> requests)
-        //{
-        //    var cuentaBaseSol = await _cuentaBaseSolService.GetCuentaBaseSolFirstOrDefaultAsync();
-        //    var token = await _tokenBaseService.GetOrGenerateActiveTokenBaseAsync(cuentaBaseSol.Id);
-
-        //    var comprobantes = requests.Select(r => new DescargarZipRequest
-        //    {
-        //        RucEmisor = r.RucEmisor,
-        //        TipoComprobante = r.TipoComprobante,
-        //        Serie = r.Serie,
-        //        Numero = r.Numero,
-        //        Tipo = "02"
-        //    }).ToList();
-
-        //    var results = await _cpeService.ConsultarLoteCpeAsync(token.AccessToken, comprobantes);
-
-        //    return Ok(results);
-        //}
-
     }
 }

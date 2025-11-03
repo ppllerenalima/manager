@@ -101,28 +101,44 @@ namespace Manager.API.Controllers
         /// </list>
         /// </returns>
         [HttpPost("importar-glosa")]
-        public async Task<IActionResult> ImportarGlosa(
-            [FromBody] Comprobante_ImportarGlosaRequest request,
-            CancellationToken cancellationToken)
+        public async Task<IActionResult> ImportarGlosa([FromBody] Comprobante_ImportarGlosaRequest request, CancellationToken cancellationToken)
         {
             if (request == null || request.PerTributarioId == Guid.Empty || request.ClienteId == Guid.Empty)
-                return BadRequest("Request inválido. Debes enviar ClienteId y PerTributarioId.");
+                return BadRequest(new BaseResponse
+                {
+                    Success = false,
+                    Message = "Request inválido. Debes enviar ClienteId y PerTributarioId.",
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
 
             try
             {
-                // 1. Obtener token válido
+                // 1️⃣ Obtener token válido
                 var token = await _tokenService.GetOrGenerateActiveTokenAsync(request.ClienteId);
 
-                // 2. Ejecutar servicio principal
-                var result = await _comprobanteService.ImportarGlosaAsync(request.PerTributarioId, token.AccessToken, cancellationToken);
+                // 2️⃣ Ejecutar servicio principal
+                var result = await _comprobanteService.ImportarGlosaAsync(
+                    request.PerTributarioId,
+                    token.AccessToken,
+                    cancellationToken);
 
-                // 3. Respuesta uniforme
-                return Ok(new
+                // 3️⃣ Construir respuesta uniforme usando BaseResponseGeneric
+                var response = new BaseResponseGeneric<Comprobante_ImportarGlosaResponse>
                 {
-                    Success = true,
-                    Count = result.Count,
-                    Data = result
-                });
+                    Success = result.Success,
+                    Message = result.Message,
+                    StatusCode = result.StatusCode,
+                    Data = new Comprobante_ImportarGlosaResponse
+                    {
+                        TotalProcesados = result.Data?.Count ?? 0,
+                        Exitosos = result.Data?.Count(x => x.Exito) ?? 0,
+                        Fallidos = result.Data?.Count(x => !x.Exito) ?? 0,
+                        Detalle = result.Data ?? new List<Comprobante_GlosaResponse>()
+                    }
+                };
+
+                // ✅ Devuelve con el código HTTP adecuado
+                return StatusCode(response.StatusCode, response);
             }
             catch (Exception ex)
             {
@@ -130,14 +146,17 @@ namespace Manager.API.Controllers
                     "Error al importar glosas para ClienteId {ClienteId}, Periodo {Periodo}",
                     request.ClienteId, request.PerTributarioId);
 
-                return StatusCode(StatusCodes.Status500InternalServerError, new
+                return StatusCode(StatusCodes.Status500InternalServerError, new BaseResponse
                 {
                     Success = false,
                     Message = "Ocurrió un error al procesar la importación de glosas.",
-                    Details = ex.Message
+                    ErrorCode = "GLOSA_IMPORT_EXCEPTION",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 });
             }
         }
+
+
 
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateGlosa(Guid id, EditComprobanteRequest request)

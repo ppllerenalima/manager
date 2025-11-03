@@ -4,6 +4,12 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+
+		<!-- ✅ Habilitar generación de comentarios XML para Swagger -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+		<!-- ⚠️ Opcional: suprime warnings CS1591 (falta de comentarios XML en miembros públicos) -->
+		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

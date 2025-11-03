@@ -1,8 +1,4 @@
-﻿using Manager.Domain.Requests.Comprobante;
-using Manager.Domain.Services.Interfaces;
-using System.Collections.Concurrent;
-
-namespace Manager.Domain.Services
+﻿namespace Manager.Domain.Services
 {
     public class ComprobanteService : IComprobanteService
     {
@@ -36,37 +32,100 @@ namespace Manager.Domain.Services
                 .Select(x => _comprobanteMapper.Map<ComprobanteResponse>(x));
         }
 
-        public async Task<ICollection<Comrpobante_GlosaResponse>> ImportarGlosaAsync(Guid perTributarioId, string token, CancellationToken cancellationToken)
+        public async Task<BaseResponseGeneric<ICollection<Comprobante_GlosaResponse>>> ImportarGlosaAsync(
+            Guid perTributarioId,
+            string token,
+            CancellationToken cancellationToken)
         {
+            var response = new BaseResponseGeneric<ICollection<Comprobante_GlosaResponse>>();
             int maxConcurrent = 5;
 
-            var comprobantes = await _comprobanteRepository.GetAsync(predicate: z => z.PerTributarioId == perTributarioId && !z.TieneGlosa);
+            try
+            {
+                var comprobantes = await _comprobanteRepository.GetAsync(
+                    predicate: z => z.PerTributarioId == perTributarioId && !z.TieneGlosa);
 
-            var results = new ConcurrentBag<Comrpobante_GlosaResponse>();
-
-            await Parallel.ForEachAsync(comprobantes,
-                new ParallelOptions { MaxDegreeOfParallelism = maxConcurrent, CancellationToken = cancellationToken },
-                async (cpe, ct) =>
+                if (comprobantes == null || !comprobantes.Any())
                 {
-                    // 🔽 Descarga el ZIP con resiliencia
-                    var zipBytes = await EjecutarConResilienciaAsync(
-                        () => _cpeService.DescargarZipAsync(token, new DescargarZipRequest
+                    response.Success = false;
+                    response.Message = "No se encontraron comprobantes para procesar.";
+                    response.Data = new List<Comprobante_GlosaResponse>();
+                    response.StatusCode = 404;
+                    return response;
+                }
+
+                var results = new ConcurrentBag<Comprobante_GlosaResponse>();
+
+                await Parallel.ForEachAsync(comprobantes,
+                    new ParallelOptions { MaxDegreeOfParallelism = maxConcurrent, CancellationToken = cancellationToken },
+                    async (cpe, ct) =>
+                    {
+                        var zipBytes = await EjecutarConResilienciaAsync(
+                            () => _cpeService.DescargarZipAsync(token, new DescargarZipRequest
+                            {
+                                RucEmisor = cpe.NumeroDocIdentidad,
+                                TipoComprobante = cpe.TipoComprobante,
+                                Numero = Convert.ToInt32(cpe.Numero),
+                                Serie = cpe.Serie,
+                                Tipo = "02"
+                            }));
+
+                        if (zipBytes.Success && zipBytes.Data?.Archivo != null)
                         {
-                            RucEmisor = cpe.NumeroDocIdentidad,
-                            TipoComprobante = cpe.TipoComprobante,
-                            Numero = Convert.ToInt32(cpe.Numero),
-                            Serie = cpe.Serie,
-                            Tipo = "02"
-                        }));
+                            var resultado = await ProcesarAsync(zipBytes.Data.Archivo, cpe, ct);
 
-                    // 🔽 Orquestador hace todo: leer → parsear → guardar
-                    var resultado = await ProcesarAsync(zipBytes.Archivo, cpe, ct);
+                            if (resultado.Success && resultado.Data != null)
+                            {
+                                resultado.Data.Exito = true;
+                                resultado.Data.Mensaje = "Procesado correctamente.";
+                                results.Add(resultado.Data);
+                            }
+                            else
+                            {
+                                results.Add(new Comprobante_GlosaResponse
+                                {
+                                    Id = cpe.Id,
+                                    Serie = cpe.Serie,
+                                    Numero = cpe.Numero,
+                                    Exito = false,
+                                    Mensaje = resultado.Message ?? "Error desconocido al procesar glosa."
+                                });
 
-                    results.Add(resultado);
-                });
+                                _logger.LogWarning("Fallo procesando comprobante {Serie}-{Numero}: {Msg}", cpe.Serie, cpe.Numero, resultado.Message);
+                            }
+                        }
+                        else
+                        {
+                            results.Add(new Comprobante_GlosaResponse
+                            {
+                                Id = cpe.Id,
+                                Numero = cpe.Numero,
+                                Serie = cpe.Serie,
+                                Exito = false,
+                                Mensaje = $"Error al descargar ZIP: {zipBytes.Message ?? "Error desconocido"}"
+                            });
+                        }
+                    });
 
+                var total = results.Count;
+                var exitosos = results.Count(r => r.Exito);
+                var fallidos = total - exitosos;
 
-            return results.ToList();
+                response.Success = true;
+                response.Message = $"Importación completada. Total: {total}, Éxitos: {exitosos}, Fallos: {fallidos}.";
+                response.Data = results.ToList();
+                response.StatusCode = 200;
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error inesperado al procesar glosas: {ex.Message}";
+                response.ErrorCode = "GLOSA_IMPORT_ERROR";
+                response.StatusCode = 500;
+                response.Data = new List<Comprobante_GlosaResponse>();
+            }
+
+            return response;
         }
 
         public async Task<ComprobanteResponse> EditComprobanteAsync(EditComprobanteRequest request)
@@ -85,105 +144,105 @@ namespace Manager.Domain.Services
             await _comprobanteRepository.UnitOfWork.SaveChangesAsync();
 
             return _comprobanteMapper.Map<ComprobanteResponse>(existingRecord);
-
-            //var existingRecord = await _comprobanteRepository.GetAsync(request.Id);
-
-            //if (existingRecord == null) throw new ArgumentException($"Entity with {request.Id} is not present");
-
-            //var entity = _comprobanteMapper.Map<Comprobante>(request);
-            //var result = _comprobanteRepository.UpdateAsync(entity);
-
-            //await _comprobanteRepository.UnitOfWork.SaveChangesAsync();
-            //return _comprobanteMapper.Map<ComprobanteResponse>(result.Result);
         }
 
-        private async Task<Comrpobante_GlosaResponse> ProcesarAsync(byte[] zipFile, Comprobante existinfRecord, CancellationToken cancellationToken)
+        private async Task<BaseResponseGeneric<Comprobante_GlosaResponse>> ProcesarAsync(
+            byte[] zipFile, 
+            Comprobante existingRecord, 
+            CancellationToken cancellationToken)
         {
+            var response = new BaseResponseGeneric<Comprobante_GlosaResponse>();
+
             try
             {
-                // 1. Leer ZIP
+                // 1️⃣ Leer ZIP
                 var xmlContent = _zipReader.ExtractXmlFromZip(zipFile);
 
-                // 2. Parsear XML
+                // 2️⃣ Parsear XML
                 var invoice = _xmlInvoiceParserService.ParseInvoice(xmlContent);
+                var config = await _configuracionGlobalService.GetConfiguracionGlobalFirstOrDefaultAsync();
 
-                var configuracionGlobal = await _configuracionGlobalService.GetConfiguracionGlobalFirstOrDefaultAsync();
+                // 3️⃣ Construir glosa
+                var max = config.MaxCaracteresGlosa > 0 ? config.MaxCaracteresGlosa : 100;
+                var glosa = string.Join("; ", invoice.InvoiceLines.Select(l =>
+                {
+                    var desc = l.Description ?? string.Empty;
+                    return desc.Length > max ? desc.Substring(0, max) + "..." : desc;
+                }));
 
-                // 3. Obtener Glosa
-                var glosa = string.Join("; ",
-                    invoice.InvoiceLines.Select(l =>
-                    {
-                        var desc = l.Description ?? string.Empty;
-                        var max = configuracionGlobal.MaxCaracteresGlosa;
+                // 4️⃣ Guardar en BD
+                existingRecord.Glosa = glosa;
+                existingRecord.TieneGlosa = true;
 
-                        if (max <= 0) return string.Empty; // fallback defensivo
-
-                        // Si la descripción supera el máximo, cortamos y añadimos "..."
-                        return desc.Length > max
-                            ? desc.Substring(0, max) + "..."
-                            : desc;
-                    })
-                );
-
-                existinfRecord.Glosa = glosa;
-                existinfRecord.TieneGlosa = true;
-
-                // 4. Guardar en BD
-                await _comprobanteRepository.UpdateAsync(existinfRecord);
+                await _comprobanteRepository.UpdateAsync(existingRecord);
                 await _comprobanteRepository.UnitOfWork.SaveChangesAsync();
 
-                return new Comrpobante_GlosaResponse
+                // 5️⃣ Construir respuesta exitosa
+                response.Success = true;
+                response.Message = "Glosa procesada correctamente.";
+                response.StatusCode = 200;
+                response.Data = new Comprobante_GlosaResponse
                 {
-                    EsExito = true,
-                    StatusCode = 200,
-                    NombreArchivo = $"{existinfRecord.NumeroDocIdentidad}-{existinfRecord.TipoComprobante}-{existinfRecord.Serie}-{existinfRecord.Numero}"
+                    Id = existingRecord.Id,
+                    Serie = existingRecord.Serie,
+                    Numero = existingRecord.Numero,
+                    Glosa = glosa,
+                    NombreArchivo = $"{existingRecord.NumeroDocIdentidad}-{existingRecord.TipoComprobante}-{existingRecord.Serie}-{existingRecord.Numero}"
                 };
             }
             catch (Exception ex)
             {
-                return new Comrpobante_GlosaResponse
-                {
-                    EsExito = false,
-                    StatusCode = 500,
-                    NombreArchivo = $"{existinfRecord.NumeroDocIdentidad}-{existinfRecord.TipoComprobante}-{existinfRecord.Serie}-{existinfRecord.Numero}",
-                    Errores = new List<ErrorComrpobante_Response>
-                    {
-                        new ErrorComrpobante_Response
-                        {
-                            Status = "EX",
-                            Message = ex.Message
-                        }
-                    }
-                };
+                // 🛑 Capturamos cualquier error
+                response.Success = false;
+                response.Message = $"Error al procesar glosa: {ex.Message}";
+                response.ErrorCode = "GLOSA_PROCESS_ERROR";
+                response.StatusCode = 500;
+                response.Data = null;
+
+                _logger.LogError(ex, "Error procesando comprobante {Serie}-{Numero}", existingRecord.Serie, existingRecord.Numero);
             }
+
+            return response;
         }
 
-        private async Task<T> EjecutarConResilienciaAsync<T>(
-            Func<Task<T>> accion,
-            int maxIntentos = 3,
-            int delayMs = 1000)
+        private async Task<BaseResponseGeneric<T>> EjecutarConResilienciaAsync<T>(
+            Func<Task<BaseResponseGeneric<T>>> action,
+            int maxRetries = 3,
+            int initialDelayMs = 2000)
         {
-            int intento = 0;
-            Exception ultimaEx = null;
+            var response = new BaseResponseGeneric<T>();
+            int attempt = 0;
 
-            while (intento < maxIntentos)
+            while (attempt < maxRetries)
             {
                 try
                 {
-                    return await accion();
+                    attempt++;
+                    var result = await action();
+
+                    if (result.Success)
+                        return result;
+
+                    _logger.LogWarning("Intento {Attempt}/{Max} falló: {Message}", attempt, maxRetries, result.Message);
+
+                    // Espera incremental
+                    await Task.Delay(initialDelayMs * attempt);
                 }
                 catch (Exception ex)
                 {
-                    ultimaEx = ex;
-                    intento++;
-                    if (intento < maxIntentos)
-                    {
-                        await Task.Delay(delayMs * intento); // backoff exponencial
-                    }
+                    _logger.LogError(ex, "Error ejecutando intento {Attempt}/{Max}.", attempt, maxRetries);
+                    await Task.Delay(initialDelayMs * attempt);
                 }
             }
 
-            throw ultimaEx ?? new Exception("Error desconocido en resiliencia");
+            response.Success = false;
+            response.Message = $"No se pudo completar la operación después de {maxRetries} intentos.";
+            response.ErrorCode = "RETRY_FAILED";
+            response.StatusCode = 500;
+            response.Data = default;
+
+            return response;
         }
+
     }
 }

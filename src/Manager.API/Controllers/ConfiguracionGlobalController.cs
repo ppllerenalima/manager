@@ -38,7 +38,7 @@
                 return NotFound(new BaseResponseGeneric<ConfiguracionGlobalResponse>
                 {
                     Success = false,
-                    ErrorMessage = "No se encontró ninguna cuenta base."
+                    Message = "No se encontró ninguna cuenta base."
                 });
 
             return Ok(new BaseResponseGeneric<ConfiguracionGlobalResponse>

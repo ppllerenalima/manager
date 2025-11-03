@@ -1,4 +1,6 @@
-﻿namespace Manager.API.Controllers
+﻿using Manager.Domain.Responses.ClienteResponses;
+
+namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -45,6 +47,23 @@
             request.Id = id;
             var result = await _clienteService.EditClienteAsync(request);
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Activa el permiso de un cliente en el sistema.
+        /// </summary>
+        /// <param name="id">Identificador único del cliente.</param>
+        /// <returns>
+        /// Retorna un objeto <see cref="BaseResponse"/> con el resultado de la operación:
+        /// - <c>Success = true</c> si se activó correctamente.
+        /// - <c>Success = false</c> si ocurrió un error o el cliente no existe.
+        /// </returns>
+        [HttpPut("dar-permiso/{id:guid}")]
+        [ClienteExists]
+        public async Task<IActionResult> DarPermiso(Guid id)
+        {
+            var result = await _clienteService.DarPermisoAsync(id);
+            return StatusCode(result.StatusCode, result);
         }
 
         [HttpDelete("{id:guid}")]

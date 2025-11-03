@@ -2,6 +2,7 @@
 
 using Manager.Domain.Services.Interfaces;
 using Manager.Infrastructure.FileAdapters;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,8 +85,22 @@ builder.Services.AddCors(options =>
 
 // 🔍 Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
+var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+builder.Services.AddSwaggerGen(config =>
+{
+    config.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Manager.API",
+        Description = "Documentación de la API Manager",
+        Version = "v1"
+    });
+
+    // ✅ Incluir comentarios XML
+    config.IncludeXmlComments(xmlPath);
+});
 #endregion
 
 #region Pipeline HTTP
@@ -144,16 +159,27 @@ app.Run();
 static async Task ApplyMigrationsAndSeedDataAsync(WebApplication app)
 {
     using var scope = app.Services.CreateScope();
-
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<ManagerContext>();
 
-    if (dbContext.Database.GetPendingMigrations().Any())
+    try
     {
-        await dbContext.Database.MigrateAsync();
+        var pending = await dbContext.Database.GetPendingMigrationsAsync();
+
+        if (pending.Any())
+        {
+            logger.LogInformation("Aplicando migraciones pendientes...");
+            await dbContext.Database.MigrateAsync();
+            logger.LogInformation("Migraciones aplicadas correctamente.");
+        }
+
+        var userDataSeeder = scope.ServiceProvider.GetRequiredService<UserDataSeeder>();
+        await userDataSeeder.SeedAsync();
     }
-
-    var userDataSeeder = scope.ServiceProvider.GetRequiredService<UserDataSeeder>();
-    await userDataSeeder.SeedAsync();
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error aplicando migraciones o seed data.");
+        throw; // Opcional: relanzar para evitar levantar la app con BD inconsistente
+    }
 }
-
 #endregion

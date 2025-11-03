@@ -1,4 +1,4 @@
-using Manager.Domain.Responses;
+using Manager.Domain.Responses.ClienteResponses;
 using Newtonsoft.Json;
 using RiskFirst.Hateoas.Models;
 
