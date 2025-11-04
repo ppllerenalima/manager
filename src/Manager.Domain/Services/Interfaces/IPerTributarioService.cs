@@ -4,7 +4,8 @@ namespace Manager.Domain.Services.Interfaces
     {
         Task<IEnumerable<PerTributarioResponse>> GetPerTributariosAsync();
         Task<PerTributarioResponse> GetPerTributarioAsync(GetPerTributarioRequest request);
-        Task<PerTributarioResponse> GetPerTributarioByPeriodoAsync(GetPerTributarioByPeriodoRequest request);
-        Task<PerTributarioResponse> AddPerTributarioAsync(AddPerTributarioRequest request, CancellationToken cancellationToken = default);
+        Task<BaseResponseGeneric<PerTributarioResponse>> GetPerTributarioByPeriodoAsync(GetPerTributarioByPeriodoRequest request);
+        //Task<PerTributarioResponse> AddPerTributarioAsync(AddPerTributarioRequest request, CancellationToken cancellationToken = default);
+        Task<BaseResponseGeneric<PerTributarioResponse>> AddPerTributarioAsync(AddPerTributarioRequest request, CancellationToken cancellationToken = default);
     }
 }

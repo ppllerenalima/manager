@@ -2,6 +2,7 @@
 
 using Manager.Domain.Services.Interfaces;
 using Manager.Infrastructure.FileAdapters;
+using System.Net.Http.Headers;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,7 +48,8 @@ builder.Services.AddTransient<UserDataSeeder>();
 builder.Services.AddHttpClient<ICpeService, CpeService>(client =>
 {
     client.BaseAddress = new Uri("https://api-cpe.sunat.gob.pe/");
-    client.Timeout = TimeSpan.FromMinutes(5);
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    client.Timeout = TimeSpan.FromSeconds(15); // ⏱️ Seteado aquí una vez
 });
 
 // 🔹 Controladores y JSON

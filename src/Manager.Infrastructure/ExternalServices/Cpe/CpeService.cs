@@ -83,8 +83,6 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
             }
         }
 
-
-
         #region PRIVADOS
         private async Task<BaseResponseGeneric<DescargarZipResponse>> DescargarPorControlCpeAsync(string token, DescargarZipRequest request)
         {
@@ -107,13 +105,15 @@ namespace Manager.Infrastructure.ExternalServices.Cpe
 
                     return ResponseFactory.Success(data, "Archivo descargado correctamente", statusCode);
                 }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    errorContent = ExternalServiceHelper.CleanErrorContent(errorContent, (int)response.StatusCode);
 
-                    return ResponseFactory.Error<DescargarZipResponse>(errorContent, "EXTERNAL_SERVICE_ERROR", (int)response.StatusCode);
-                }
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorContent = ExternalServiceHelper.CleanErrorContent(errorContent, statusCode);
+
+                return ResponseFactory.Error<DescargarZipResponse>(
+                    errorContent,
+                    "EXTERNAL_SERVICE_ERROR",
+                    statusCode
+                );
             }
             catch (Exception ex)
             {

@@ -1,8 +1,4 @@
-﻿
-
-using Manager.Domain.Services.Interfaces;
-
-namespace Manager.Infrastructure.ExternalServices.Sire
+﻿namespace Manager.Infrastructure.ExternalServices.Sire
 {
     public class SireComprasService : ISireComprasService
     {
@@ -279,60 +275,117 @@ namespace Manager.Infrastructure.ExternalServices.Sire
             return resultado;
         }
 
-        public async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request)
+        public async Task<BaseResponseGeneric<DescargarArchivoReporteResponse>> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request)
         {
-            var responseResult = new DescargarArchivoReporteResponse();
+            var response = new BaseResponseGeneric<DescargarArchivoReporteResponse>
+            {
+                Data = new DescargarArchivoReporteResponse()
+            };
 
             try
             {
-                using (var client = new HttpClient())
+                using var client = new HttpClient();
+                client.BaseAddress = new Uri("https://api-sire.sunat.gob.pe/");
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var queryString =
+                    $"nomArchivoReporte={Uri.EscapeDataString(request.NomArchivoReporte)}" +
+                    $"&codTipoArchivoReporte={request.CodTipoArchivoReporte}" +
+                    $"&perTributario={request.PerTributario}" +
+                    $"&codProceso={request.CodProceso}" +
+                    $"&numTicket={request.NumTicket}";
+
+                var url = $"v1/contribuyente/migeigv/libros/rvierce/gestionprocesosmasivos/web/masivo/archivoreporte?{queryString}";
+
+                var httpResponse = await client.GetAsync(url);
+                response.StatusCode = (int)httpResponse.StatusCode;
+
+                if (httpResponse.IsSuccessStatusCode)
                 {
-                    client.BaseAddress = new Uri("https://api-sire.sunat.gob.pe/");
-                    client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    var archivoBytes = await httpResponse.Content.ReadAsByteArrayAsync();
+                    response.Data.Archivo = archivoBytes;
+                    response.Data.NombreArchivo = request.NomArchivoReporte;
 
-                    var queryString = $"nomArchivoReporte={Uri.EscapeDataString(request.NomArchivoReporte)}" +
-                                      $"&codTipoArchivoReporte={request.CodTipoArchivoReporte}" +
-                                      //$"&codLibro={request.CodLibro}" +
-                                      $"&perTributario={request.PerTributario}" +
-                                      $"&codProceso={request.CodProceso}" +
-                                      $"&numTicket={request.NumTicket}";
+                    response.Success = true;
+                    response.Message = "Archivo descargado correctamente.";
+                }
+                else
+                {
+                    var errorContent = await httpResponse.Content.ReadAsStringAsync();
 
-                    var url = $"v1/contribuyente/migeigv/libros/rvierce/gestionprocesosmasivos/web/masivo/archivoreporte?{queryString}";
-
-                    var response = await client.GetAsync(url);
-                    responseResult.StatusCode = (int)response.StatusCode;
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        responseResult.Archivo = await response.Content.ReadAsByteArrayAsync();
-                        responseResult.NombreArchivo = request.NomArchivoReporte;
-                        responseResult.EsExito = true;
-                    }
-                    else
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        responseResult.Errores.Add(new Error_DescargarArchivoReporteResponse
-                        {
-                            status = "SUNAT_ERROR",
-                            message = errorContent
-                        });
-                        responseResult.EsExito = false;
-                    }
+                    response.Success = false;
+                    response.Message = "Error al descargar el archivo desde SUNAT.";
+                    response.ErrorCode = "SUNAT_ERROR";
+                    response.Data.ErrorContent = errorContent;
                 }
             }
             catch (Exception ex)
             {
-                responseResult.EsExito = false;
-                responseResult.StatusCode = 500;
-                responseResult.Errores.Add(new Error_DescargarArchivoReporteResponse
-                {
-                    status = "EX",
-                    message = ex.Message
-                });
+                response.Success = false;
+                response.Message = "Ocurrió un error al comunicarse con el servicio de SUNAT.";
+                response.ErrorCode = "EX";
+                response.StatusCode = 500;
             }
 
-            return responseResult;
+            return response;
         }
+
+
+        //public async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request)
+        //{
+        //    var responseResult = new DescargarArchivoReporteResponse();
+
+        //    try
+        //    {
+        //        using (var client = new HttpClient())
+        //        {
+        //            client.BaseAddress = new Uri("https://api-sire.sunat.gob.pe/");
+        //            client.DefaultRequestHeaders.Clear();
+        //            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        //            var queryString = $"nomArchivoReporte={Uri.EscapeDataString(request.NomArchivoReporte)}" +
+        //                              $"&codTipoArchivoReporte={request.CodTipoArchivoReporte}" +
+        //                              //$"&codLibro={request.CodLibro}" +
+        //                              $"&perTributario={request.PerTributario}" +
+        //                              $"&codProceso={request.CodProceso}" +
+        //                              $"&numTicket={request.NumTicket}";
+
+        //            var url = $"v1/contribuyente/migeigv/libros/rvierce/gestionprocesosmasivos/web/masivo/archivoreporte?{queryString}";
+
+        //            var response = await client.GetAsync(url);
+        //            responseResult.StatusCode = (int)response.StatusCode;
+
+        //            if (response.IsSuccessStatusCode)
+        //            {
+        //                responseResult.Archivo = await response.Content.ReadAsByteArrayAsync();
+        //                responseResult.NombreArchivo = request.NomArchivoReporte;
+        //                responseResult.EsExito = true;
+        //            }
+        //            else
+        //            {
+        //                var errorContent = await response.Content.ReadAsStringAsync();
+        //                responseResult.Errores.Add(new Error_DescargarArchivoReporteResponse
+        //                {
+        //                    status = "SUNAT_ERROR",
+        //                    message = errorContent
+        //                });
+        //                responseResult.EsExito = false;
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        responseResult.EsExito = false;
+        //        responseResult.StatusCode = 500;
+        //        responseResult.Errores.Add(new Error_DescargarArchivoReporteResponse
+        //        {
+        //            status = "EX",
+        //            message = ex.Message
+        //        });
+        //    }
+
+        //    return responseResult;
+        //}
     }
 }

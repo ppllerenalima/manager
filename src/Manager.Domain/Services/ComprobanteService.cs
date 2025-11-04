@@ -38,7 +38,8 @@
             CancellationToken cancellationToken)
         {
             var response = new BaseResponseGeneric<ICollection<Comprobante_GlosaResponse>>();
-            int maxConcurrent = 5;
+            var results = new ConcurrentBag<Comprobante_GlosaResponse>();
+            int maxConcurrent = 3; // 🔹 Reduce concurrencia para evitar saturar red o CPU
 
             try
             {
@@ -47,38 +48,51 @@
 
                 if (comprobantes == null || !comprobantes.Any())
                 {
-                    response.Success = false;
-                    response.Message = "No se encontraron comprobantes para procesar.";
-                    response.Data = new List<Comprobante_GlosaResponse>();
-                    response.StatusCode = 404;
-                    return response;
+                    return new BaseResponseGeneric<ICollection<Comprobante_GlosaResponse>>
+                    {
+                        Success = false,
+                        Message = "No se encontraron comprobantes para procesar.",
+                        Data = new List<Comprobante_GlosaResponse>(),
+                        StatusCode = 404
+                    };
                 }
 
-                var results = new ConcurrentBag<Comprobante_GlosaResponse>();
+                _logger.LogInformation("Iniciando importación de glosas para {Count} comprobantes", comprobantes.Count);
 
                 await Parallel.ForEachAsync(comprobantes,
                     new ParallelOptions { MaxDegreeOfParallelism = maxConcurrent, CancellationToken = cancellationToken },
                     async (cpe, ct) =>
                     {
-                        var zipBytes = await EjecutarConResilienciaAsync(
-                            () => _cpeService.DescargarZipAsync(token, new DescargarZipRequest
-                            {
-                                RucEmisor = cpe.NumeroDocIdentidad,
-                                TipoComprobante = cpe.TipoComprobante,
-                                Numero = Convert.ToInt32(cpe.Numero),
-                                Serie = cpe.Serie,
-                                Tipo = "02"
-                            }));
+                        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                        cts.CancelAfter(TimeSpan.FromMinutes(2)); // ⏱ timeout por comprobante
 
-                        if (zipBytes.Success && zipBytes.Data?.Archivo != null)
+                        try
                         {
-                            var resultado = await ProcesarAsync(zipBytes.Data.Archivo, cpe, ct);
+                            var zipBytes = await EjecutarConResilienciaAsync(
+                                () => _cpeService.DescargarZipAsync(token, new DescargarZipRequest
+                                {
+                                    RucEmisor = cpe.NumeroDocIdentidad,
+                                    TipoComprobante = cpe.TipoComprobante,
+                                    Numero = Convert.ToInt32(cpe.Numero),
+                                    Serie = cpe.Serie,
+                                    Tipo = "02"
+                                }));
 
-                            if (resultado.Success && resultado.Data != null)
+                            _logger.LogInformation("Descarga de ZIP completada para comprobante {Serie}-{Numero}", cpe.Serie, cpe.Numero);
+                            _logger.LogInformation("Resultado de descarga: {Success}, Mensaje: {Message}", zipBytes.Success, zipBytes.Message);
+
+                            if (zipBytes.Success && zipBytes.Data?.Archivo != null)
                             {
-                                resultado.Data.Exito = true;
-                                resultado.Data.Mensaje = "Procesado correctamente.";
-                                results.Add(resultado.Data);
+                                var resultado = await ProcesarAsync(zipBytes.Data.Archivo, cpe, cts.Token);
+
+                                results.Add(new Comprobante_GlosaResponse
+                                {
+                                    Id = cpe.Id,
+                                    Serie = cpe.Serie,
+                                    Numero = cpe.Numero,
+                                    Exito = resultado.Success,
+                                    Mensaje = resultado.Message ?? "Procesado correctamente."
+                                });
                             }
                             else
                             {
@@ -88,21 +102,32 @@
                                     Serie = cpe.Serie,
                                     Numero = cpe.Numero,
                                     Exito = false,
-                                    Mensaje = resultado.Message ?? "Error desconocido al procesar glosa."
+                                    Mensaje = $"Error al descargar ZIP: {zipBytes.Message ?? "Error desconocido"}"
                                 });
-
-                                _logger.LogWarning("Fallo procesando comprobante {Serie}-{Numero}: {Msg}", cpe.Serie, cpe.Numero, resultado.Message);
                             }
                         }
-                        else
+                        catch (OperationCanceledException)
                         {
                             results.Add(new Comprobante_GlosaResponse
                             {
                                 Id = cpe.Id,
-                                Numero = cpe.Numero,
                                 Serie = cpe.Serie,
+                                Numero = cpe.Numero,
                                 Exito = false,
-                                Mensaje = $"Error al descargar ZIP: {zipBytes.Message ?? "Error desconocido"}"
+                                Mensaje = "Tiempo de espera excedido (timeout)."
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error procesando comprobante {Serie}-{Numero}", cpe.Serie, cpe.Numero);
+
+                            results.Add(new Comprobante_GlosaResponse
+                            {
+                                Id = cpe.Id,
+                                Serie = cpe.Serie,
+                                Numero = cpe.Numero,
+                                Exito = false,
+                                Mensaje = $"Error inesperado: {ex.Message}"
                             });
                         }
                     });
@@ -118,8 +143,9 @@
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error global al importar glosas.");
                 response.Success = false;
-                response.Message = $"Error inesperado al procesar glosas: {ex.Message}";
+                response.Message = $"Error inesperado: {ex.Message}";
                 response.ErrorCode = "GLOSA_IMPORT_ERROR";
                 response.StatusCode = 500;
                 response.Data = new List<Comprobante_GlosaResponse>();
@@ -207,7 +233,7 @@
 
         private async Task<BaseResponseGeneric<T>> EjecutarConResilienciaAsync<T>(
             Func<Task<BaseResponseGeneric<T>>> action,
-            int maxRetries = 3,
+            int maxRetries = 1,
             int initialDelayMs = 2000)
         {
             var response = new BaseResponseGeneric<T>();

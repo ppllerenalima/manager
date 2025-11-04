@@ -1,6 +1,4 @@
-﻿using Manager.Domain.Services.Interfaces;
-
-namespace Manager.Domain.Services
+﻿namespace Manager.Domain.Services
 {
     public class PerTributarioService : IPerTributarioService
     {
@@ -43,59 +41,138 @@ namespace Manager.Domain.Services
             return _perTributarioMapper.Map<PerTributarioResponse>(entity);
         }
 
-        public async Task<PerTributarioResponse> GetPerTributarioByPeriodoAsync(GetPerTributarioByPeriodoRequest request)
+        public async Task<BaseResponseGeneric<PerTributarioResponse>> GetPerTributarioByPeriodoAsync(GetPerTributarioByPeriodoRequest request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            var response = new BaseResponseGeneric<PerTributarioResponse>();
 
-            var entity = await _perTributarioRepository.GetByPredicateAsync(
-                predicate: z => z.anio == request.Anio
-                && z.mes == request.Mes
-                && z.ClienteId == request.ClienteId);
-
-            if (entity == null)
+            try
             {
-                _logger.LogWarning("📌 No se encontró PerTributario para Cliente {ClienteId}, Año {Anio}, Mes {Mes}",
-                    request.ClienteId, request.Anio, request.Mes);
+                if (request == null)
+                    throw new ArgumentNullException(nameof(request));
 
-                return null; // o lanzar una excepción controlada
+                var entity = await _perTributarioRepository.GetByPredicateAsync(
+                    predicate: z => z.anio == request.Anio
+                                 && z.mes == request.Mes
+                                 && z.ClienteId == request.ClienteId);
+
+                if (entity == null)
+                {
+                    _logger.LogWarning("📌 No se encontró PerTributario para Cliente {ClienteId}, Año {Anio}, Mes {Mes}",
+                        request.ClienteId, request.Anio, request.Mes);
+
+                    response.Success = false;
+                    response.Message = "No se encontró el periodo tributario especificado.";
+                    response.StatusCode = 404;
+                    return response;
+                }
+
+                _logger.LogInformation("✅ PerTributario encontrado: {PerTributarioId}", entity.Id);
+
+                response.Success = true;
+                response.Message = "Periodo tributario encontrado correctamente.";
+                response.StatusCode = 200;
+                response.Data = _perTributarioMapper.Map<PerTributarioResponse>(entity);
+
+                return response;
             }
-
-            _logger.LogInformation("✅ PerTributario encontrado: {PerTributarioId}", entity.Id);
-
-            return _perTributarioMapper.Map<PerTributarioResponse>(entity);
+            catch (ArgumentNullException ex)
+            {
+                _logger.LogError(ex, "❌ Request nulo al buscar periodo tributario");
+                return new BaseResponseGeneric<PerTributarioResponse>
+                {
+                    Success = false,
+                    Message = "El request no puede ser nulo.",
+                    ErrorCode = "ARGUMENT_NULL",
+                    StatusCode = 400
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error inesperado al obtener periodo tributario");
+                return new BaseResponseGeneric<PerTributarioResponse>
+                {
+                    Success = false,
+                    Message = $"Error inesperado: {ex.Message}",
+                    ErrorCode = "EXCEPTION",
+                    StatusCode = 500
+                };
+            }
         }
 
-        public async Task<PerTributarioResponse> AddPerTributarioAsync(AddPerTributarioRequest request, CancellationToken cancellationToken)
+        public async Task<BaseResponseGeneric<PerTributarioResponse>> AddPerTributarioAsync(AddPerTributarioRequest request, CancellationToken cancellationToken)
         {
-            // iniciamos una transacción en el UnitOfWork
+            var response = new BaseResponseGeneric<PerTributarioResponse>();
+
+            // Iniciamos una transacción
             using var transaction = await _perTributarioRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
             {
-                // 1. Crear PerTributario
+                // 1️⃣ Crear PerTributario
                 var perTributario = _perTributarioMapper.Map<PerTributario>(request);
                 var resultPerTributario = await _perTributarioRepository.AddAsync(perTributario, cancellationToken);
 
-                // 2. Procesar comprobantes
+                // 2️⃣ Procesar y registrar comprobantes
                 var comprobantes = await ProcesarZipAsync(request.archivoZip, resultPerTributario.Id);
                 await _comprobanteRepository.AddAsync(comprobantes, cancellationToken);
 
-                // 3. Guardar cambios en la BD (todos juntos)
+                // 3️⃣ Guardar todos los cambios en la BD
                 await _perTributarioRepository.UnitOfWork.SaveChangesAsync(cancellationToken);
 
-                // 4. Confirmar transacción
+                // 4️⃣ Confirmar transacción
                 await transaction.CommitAsync(cancellationToken);
 
-                return _perTributarioMapper.Map<PerTributarioResponse>(resultPerTributario);
+                response.Success = true;
+                response.Message = "Periodo tributario y comprobantes registrados correctamente.";
+                response.StatusCode = 201;
+                response.Data = _perTributarioMapper.Map<PerTributarioResponse>(resultPerTributario);
             }
-            catch
+            catch (Exception ex)
             {
-                // si ocurre cualquier excepción, revertimos todo
+                // 🔴 Si ocurre un error, revertimos la transacción
                 await transaction.RollbackAsync(cancellationToken);
-                throw;
+
+                _logger.LogError(ex, "Error al registrar el periodo tributario para ClienteId {ClienteId}", request.ClienteId);
+
+                response.Success = false;
+                response.Message = "Error al registrar el periodo tributario.";
+                response.ErrorCode = "EXCEPTION";
+                response.StatusCode = 500;
             }
+
+            return response;
         }
+
+        //public async Task<PerTributarioResponse> AddPerTributarioAsync(AddPerTributarioRequest request, CancellationToken cancellationToken)
+        //{
+        //    // iniciamos una transacción en el UnitOfWork
+        //    using var transaction = await _perTributarioRepository.UnitOfWork.BeginTransactionAsync(cancellationToken);
+
+        //    try
+        //    {
+        //        // 1. Crear PerTributario
+        //        var perTributario = _perTributarioMapper.Map<PerTributario>(request);
+        //        var resultPerTributario = await _perTributarioRepository.AddAsync(perTributario, cancellationToken);
+
+        //        // 2. Procesar comprobantes
+        //        var comprobantes = await ProcesarZipAsync(request.archivoZip, resultPerTributario.Id);
+        //        await _comprobanteRepository.AddAsync(comprobantes, cancellationToken);
+
+        //        // 3. Guardar cambios en la BD (todos juntos)
+        //        await _perTributarioRepository.UnitOfWork.SaveChangesAsync(cancellationToken);
+
+        //        // 4. Confirmar transacción
+        //        await transaction.CommitAsync(cancellationToken);
+
+        //        return _perTributarioMapper.Map<PerTributarioResponse>(resultPerTributario);
+        //    }
+        //    catch
+        //    {
+        //        // si ocurre cualquier excepción, revertimos todo
+        //        await transaction.RollbackAsync(cancellationToken);
+        //        throw;
+        //    }
+        //}
 
         private async Task<ICollection<Comprobante>> ProcesarZipAsync(byte[] archivoZip, Guid Id)
         {
