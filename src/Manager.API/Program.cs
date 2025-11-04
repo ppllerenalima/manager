@@ -1,6 +1,7 @@
 ﻿#region Configuración de Servicios
 
 using Manager.Domain.Services.Interfaces;
+using Manager.Infrastructure.ExternalServices.Cpe.Client;
 using Manager.Infrastructure.FileAdapters;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -45,12 +46,7 @@ builder.Services
 builder.Services.AddTransient<UserDataSeeder>();
 
 // 🔹 HttpClient para SUNAT (se agrega fuera del chain principal)
-builder.Services.AddHttpClient<ICpeService, CpeService>(client =>
-{
-    client.BaseAddress = new Uri("https://api-cpe.sunat.gob.pe/");
-    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-    client.Timeout = TimeSpan.FromSeconds(15); // ⏱️ Seteado aquí una vez
-});
+builder.Services.AddExternalHttpClients(builder.Configuration);
 
 // 🔹 Controladores y JSON
 builder.Services

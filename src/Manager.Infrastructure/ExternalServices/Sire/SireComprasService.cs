@@ -3,12 +3,10 @@
     public class SireComprasService : ISireComprasService
     {
         private readonly HttpClient _httpClient;
-        private readonly IZipFileParser _zipFileParser;
 
-        public SireComprasService(HttpClient httpClient, IZipFileParser zipFileParser)
+        public SireComprasService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _zipFileParser = zipFileParser;
         }
 
         public async Task<SunatAuthResponse> AccessTokenAsync(SunatAuthRequest request)
@@ -277,10 +275,7 @@
 
         public async Task<BaseResponseGeneric<DescargarArchivoReporteResponse>> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request)
         {
-            var response = new BaseResponseGeneric<DescargarArchivoReporteResponse>
-            {
-                Data = new DescargarArchivoReporteResponse()
-            };
+            var response = new BaseResponseGeneric<DescargarArchivoReporteResponse> { Data = new DescargarArchivoReporteResponse() };
 
             try
             {
@@ -330,62 +325,5 @@
 
             return response;
         }
-
-
-        //public async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request)
-        //{
-        //    var responseResult = new DescargarArchivoReporteResponse();
-
-        //    try
-        //    {
-        //        using (var client = new HttpClient())
-        //        {
-        //            client.BaseAddress = new Uri("https://api-sire.sunat.gob.pe/");
-        //            client.DefaultRequestHeaders.Clear();
-        //            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        //            var queryString = $"nomArchivoReporte={Uri.EscapeDataString(request.NomArchivoReporte)}" +
-        //                              $"&codTipoArchivoReporte={request.CodTipoArchivoReporte}" +
-        //                              //$"&codLibro={request.CodLibro}" +
-        //                              $"&perTributario={request.PerTributario}" +
-        //                              $"&codProceso={request.CodProceso}" +
-        //                              $"&numTicket={request.NumTicket}";
-
-        //            var url = $"v1/contribuyente/migeigv/libros/rvierce/gestionprocesosmasivos/web/masivo/archivoreporte?{queryString}";
-
-        //            var response = await client.GetAsync(url);
-        //            responseResult.StatusCode = (int)response.StatusCode;
-
-        //            if (response.IsSuccessStatusCode)
-        //            {
-        //                responseResult.Archivo = await response.Content.ReadAsByteArrayAsync();
-        //                responseResult.NombreArchivo = request.NomArchivoReporte;
-        //                responseResult.EsExito = true;
-        //            }
-        //            else
-        //            {
-        //                var errorContent = await response.Content.ReadAsStringAsync();
-        //                responseResult.Errores.Add(new Error_DescargarArchivoReporteResponse
-        //                {
-        //                    status = "SUNAT_ERROR",
-        //                    message = errorContent
-        //                });
-        //                responseResult.EsExito = false;
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        responseResult.EsExito = false;
-        //        responseResult.StatusCode = 500;
-        //        responseResult.Errores.Add(new Error_DescargarArchivoReporteResponse
-        //        {
-        //            status = "EX",
-        //            message = ex.Message
-        //        });
-        //    }
-
-        //    return responseResult;
-        //}
     }
 }

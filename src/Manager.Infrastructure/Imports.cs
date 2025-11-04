@@ -6,6 +6,7 @@ global using Manager.Domain.Responses;
 global using Manager.Domain.Responses.CpeResponses;
 global using Manager.Domain.Services.Interfaces;
 global using Manager.Domain.Settings;
+global using Manager.Infrastructure.ExternalServices.Cpe.Client;
 global using Manager.Infrastructure.Http;
 global using Microsoft.AspNetCore.Authentication.JwtBearer;
 global using Microsoft.AspNetCore.Identity;
@@ -22,9 +23,7 @@ global using System.IO.Compression;
 global using System.Linq.Expressions;
 global using System.Net;
 global using System.Net.Http.Headers;
-global using System.ServiceModel;
 global using System.Text;
 global using System.Text.Json;
 global using System.Text.RegularExpressions;
 global using System.Threading;
-
