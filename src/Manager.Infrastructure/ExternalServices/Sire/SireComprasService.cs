@@ -2,11 +2,14 @@
 {
     public class SireComprasService : ISireComprasService
     {
+        private readonly MigeigvClient _migeigvClient;
+
         private readonly HttpClient _httpClient;
 
-        public SireComprasService(HttpClient httpClient)
+        public SireComprasService(HttpClient httpClient, MigeigvClient migeigvClient)
         {
             _httpClient = httpClient;
+            _migeigvClient = migeigvClient;
         }
 
         public async Task<SunatAuthResponse> AccessTokenAsync(SunatAuthRequest request)
@@ -129,8 +132,6 @@
                 if (request.CodTipoArchivo < 0 || request.CodTipoArchivo > 1) throw new ArgumentException("El campo 'codTipoArchivo' debe ser mayor a cero y menor que 1.");
                 if (string.IsNullOrWhiteSpace(request.CodOrigenEnvio)) throw new ArgumentException("El campo 'codOrigenEnvio' es obligatorio.");
                 if (string.IsNullOrWhiteSpace(request.CodTipoCDP)) throw new ArgumentException("El campo 'CodTipoCDP' es obligatorio.");
-                //if (string.IsNullOrWhiteSpace(request.NumSerieCDP)) throw new ArgumentException("El campo 'numSerieCDP' es obligatorio.");
-                //if (string.IsNullOrWhiteSpace(request.NumCDP)) throw new ArgumentException("El campo 'numCDP' es obligatorio.");
 
                 if ((request.MtoDesde.HasValue && !request.MtoHasta.HasValue) || (!request.MtoDesde.HasValue && request.MtoHasta.HasValue))
                 {
@@ -215,62 +216,10 @@
             return responseResult;
         }
 
-        public async Task<ConsultarEstadoTicketResponse> ConsultarEstadoTicketAsync(ConsultarEstadoTicketRequest request)
+        public async Task<BaseResponseGeneric<ConsultaEstadoTicketsResponse>> ConsultarEstadoTicketAsync(ConsultarEstadoTicketRequest request, CancellationToken cancellationToken)
         {
-            var url = $"https://api-sire.sunat.gob.pe/v1/contribuyente/migeigv/libros/rvierce/gestionprocesosmasivos/web/masivo/consultaestadotickets" +
-                      $"?perIni={request.PerIni}&perFin={request.PerFin}&page={request.Page}&perPage={request.PerPage}";
+            return await _migeigvClient.ConsultarEstadoTicketAsync(request, cancellationToken);
 
-            if (!string.IsNullOrEmpty(request.NumTicket))
-                url += $"&numTicket={request.NumTicket}";
-
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
-            httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", request.AccessToken);
-            httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            using var response = await _httpClient.SendAsync(httpRequest);
-            var json = await response.Content.ReadAsStringAsync();
-
-            var resultado = new ConsultarEstadoTicketResponse
-            {
-                StatusCode = (int)response.StatusCode,
-                Errores = new List<ErrorDetail>()
-            };
-
-            if (response.IsSuccessStatusCode)
-            {
-                resultado.EsExito = true;
-                resultado.Result = JsonConvert.DeserializeObject<Result>(json);
-                return resultado;
-            }
-
-            // Si es error 422, intenta deserializar los errores específicos
-            if ((int)response.StatusCode == 422)
-            {
-                try
-                {
-                    var errorResponse = JsonConvert.DeserializeObject<Error422Response>(json);
-                    resultado.Errores = errorResponse?.Errors ?? new List<ErrorDetail>();
-                }
-                catch
-                {
-                    resultado.Errores.Add(new ErrorDetail
-                    {
-                        Cod = "Deserialización",
-                        Msg = "No se pudo interpretar el cuerpo del error 422."
-                    });
-                }
-            }
-            else
-            {
-                resultado.Errores.Add(new ErrorDetail
-                {
-                    Cod = response.StatusCode.ToString(),
-                    Msg = response.ReasonPhrase
-                });
-            }
-
-            resultado.EsExito = false;
-            return resultado;
         }
 
         public async Task<BaseResponseGeneric<DescargarArchivoReporteResponse>> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request)

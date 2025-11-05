@@ -5,8 +5,7 @@ namespace Manager.Domain.Services.Interfaces
         Task<SunatAuthResponse> AccessTokenAsync(SunatAuthRequest request);
         Task<AceptarPropuestaResultado> AceptarPropuestaAsync(AceptarPropuestaRequest requestModel);
         Task<DescargarPropuestaResponse> DescargarPropuestaRCEAsync(DescargarPropuestaRequest request);
-        Task<ConsultarEstadoTicketResponse> ConsultarEstadoTicketAsync(ConsultarEstadoTicketRequest request);
-        //Task<DescargarArchivoReporteResponse> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request);
+        Task<BaseResponseGeneric<ConsultaEstadoTicketsResponse>> ConsultarEstadoTicketAsync(ConsultarEstadoTicketRequest request, CancellationToken cancellationToken = default);
         Task<BaseResponseGeneric<DescargarArchivoReporteResponse>> DescargarArchivoReporteAsync(string token, DescargarArchivoReporteRequest request);
     }
 }

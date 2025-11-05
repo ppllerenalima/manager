@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-
-namespace Manager.Infrastructure.Http
+﻿namespace Manager.Infrastructure.Http
 {
     public static class ExternalServiceHelper
     {

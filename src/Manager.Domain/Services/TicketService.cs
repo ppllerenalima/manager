@@ -97,8 +97,18 @@ namespace Manager.Domain.Services
                 numTicket = generarTicket.Result.NumTicket;
             }
 
-            var estadoTicket = await ConsultarEstadoTicketAsync(token, numTicket, request);
-            var registro = ObtenerPrimerRegistro(estadoTicket);
+            var estadoTicket = await _sireComprasService.ConsultarEstadoTicketAsync(
+                    new ConsultarEstadoTicketRequest
+                    {
+                        AccessToken = token,
+                        PerIni = request.perTributario,
+                        PerFin = request.perTributario,
+                        Page = request.Page,
+                        PerPage = request.PerPage,
+                        NumTicket = numTicket
+                    });
+
+            var registro = ObtenerPrimerRegistro(estadoTicket.Data);
 
             var updatedTicket = await ActualizarTicketAsync(ticketEncontrado.Id, registro, request);
 
@@ -126,38 +136,38 @@ namespace Manager.Domain.Services
                 && fechaTicket.AddDays(15) < DateTime.Now;
         }
 
-        private async Task<ConsultarEstadoTicketResponse> ConsultarEstadoTicketAsync(
-            string token, string numTicket, GetTicketRequest request)
+        //private async Task<ConsultarEstadoTicketResponse> ConsultarEstadoTicketAsync(
+        //    string token, string numTicket, GetTicketRequest request)
+        //{
+        //    var estadoTicket = await _sireComprasService.ConsultarEstadoTicketAsync(
+        //        new ConsultarEstadoTicketRequest
+        //        {
+        //            AccessToken = token,
+        //            PerIni = request.perTributario,
+        //            PerFin = request.perTributario,
+        //            Page = request.Page,
+        //            PerPage = request.PerPage,
+        //            NumTicket = numTicket
+        //        });
+
+        //    if (estadoTicket == null ||
+        //        !estadoTicket.Success ||
+        //        estadoTicket.Data.Result?.Registros == null ||
+        //        !estadoTicket.Data.Result.Registros.Any())
+        //    {
+        //        var mensajeError = estadoTicket?.Data.Errores != null && estadoTicket.Data.Errores.Any()
+        //            ? string.Join(" | ", estadoTicket.Data.Errores.Select(e => $"[{e.Cod}] {e.Msg}"))
+        //            : "Error al consultar ticket en SUNAT.";
+
+        //        throw new ApplicationException(mensajeError);
+        //    }
+
+        //    return estadoTicket;
+        //}
+
+        private Registro ObtenerPrimerRegistro(ConsultaEstadoTicketsResponse estadoTicket)
         {
-            var estadoTicket = await _sireComprasService.ConsultarEstadoTicketAsync(
-                new ConsultarEstadoTicketRequest
-                {
-                    AccessToken = token,
-                    PerIni = request.perTributario,
-                    PerFin = request.perTributario,
-                    Page = request.Page,
-                    PerPage = request.PerPage,
-                    NumTicket = numTicket
-                });
-
-            if (estadoTicket == null ||
-                !estadoTicket.EsExito ||
-                estadoTicket.Result?.Registros == null ||
-                !estadoTicket.Result.Registros.Any())
-            {
-                var mensajeError = estadoTicket?.Errores != null && estadoTicket.Errores.Any()
-                    ? string.Join(" | ", estadoTicket.Errores.Select(e => $"[{e.Cod}] {e.Msg}"))
-                    : "Error al consultar ticket en SUNAT.";
-
-                throw new ApplicationException(mensajeError);
-            }
-
-            return estadoTicket;
-        }
-
-        private Registro ObtenerPrimerRegistro(ConsultarEstadoTicketResponse estadoTicket)
-        {
-            return estadoTicket.Result.Registros.First();
+            return estadoTicket.Registros.First();
         }
 
         private async Task<TicketResponse> ActualizarTicketAsync(
@@ -214,13 +224,13 @@ namespace Manager.Domain.Services
                     NumTicket = generarTicket.Result.NumTicket
                 });
 
-            if (estadoTicket?.EsExito != true || estadoTicket.Result?.Registros == null || !estadoTicket.Result.Registros.Any())
+            if (estadoTicket?.Success != true || estadoTicket.Data.Registros == null || !estadoTicket.Data.Registros.Any())
             {
                 throw new ApplicationException("No se pudo consultar el estado del ticket en SUNAT.");
             }
 
             // 3. Tomar el primer registro
-            var registro = estadoTicket.Result.Registros.First();
+            var registro = estadoTicket.Data.Registros.First();
             var detalle = registro.DetalleTicket;
             var archivo = registro.ArchivoReporte?.FirstOrDefault();
             var estadoEnvio = detalle?.CodEstadoEnvio;
