@@ -1,12 +1,4 @@
-﻿using Azure.Core;
-using Manager.API.Filters;
-using Manager.Domain.Requests.Cliente;
-using Manager.Domain.Requests.Sire.Compras;
-using Manager.Domain.Requests.Token;
-using Manager.Domain.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
-
-namespace Manager.API.Controllers
+﻿namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -14,13 +6,13 @@ namespace Manager.API.Controllers
     {
         private readonly ITokenService _tokenService;
         private readonly IClienteService _clienteService;
-        private readonly ISireComprasService _sireComprasService;
+        private readonly IClienteSolService _clienteSolService;
 
-        public TokenController(ITokenService tokenService, IClienteService clienteService, ISireComprasService sireComprasService)
+        public TokenController(ITokenService tokenService, IClienteService clienteService, IClienteSolService clienteSolService)
         {
             _tokenService = tokenService;
             _clienteService = clienteService;
-            _sireComprasService = sireComprasService;
+            _clienteSolService = clienteSolService;
         }
 
         [HttpGet("clientes/{id:Guid}/token-activo")]
@@ -45,7 +37,7 @@ namespace Manager.API.Controllers
             }
 
             // 3. Solicita nuevo token a SUNAT
-            var authResponse = await _sireComprasService.AccessTokenAsync(new SunatAuthRequest
+            var authResponse = await _clienteSolService.AccessTokenAsync(new SunatAuthRequest
             {
                 ClientId = cliente.ClientId,
                 ClientSecret = cliente.ClientSecret,
@@ -53,19 +45,19 @@ namespace Manager.API.Controllers
                 Password = cliente.Password
             });
 
-            if (!authResponse.EsExito)
+            if (!authResponse.Success)
                 return StatusCode(502, "Error al obtener token desde SUNAT.");
 
             // 4. Calcula fechas
             DateTime ahora = DateTime.UtcNow;
-            DateTime expiracion = ahora.AddSeconds(authResponse.ExpiresIn);
+            DateTime expiracion = ahora.AddSeconds(authResponse.Data.ExpiresIn);
 
             // 5. Guarda el token (nuevo o actualización)
             if (tokenBD == null)
             {
                 await _tokenService.AddTokenAsync(new AddTokenRequest
                 {
-                    AccessToken = authResponse.AccessToken,
+                    AccessToken = authResponse.Data.AccessToken,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
 
@@ -78,7 +70,7 @@ namespace Manager.API.Controllers
                 {
                     Id = tokenBD.Id,
 
-                    AccessToken = authResponse.AccessToken,
+                    AccessToken = authResponse.Data.AccessToken,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
 
@@ -87,7 +79,7 @@ namespace Manager.API.Controllers
             }
 
             // 6. Devuelve token actualizado
-            return Ok(new { accessToken = authResponse.AccessToken });
+            return Ok(new { accessToken = authResponse.Data.AccessToken });
         }
 
     }

@@ -273,6 +273,115 @@
             }
         }
 
+        public async Task<BaseResponseGeneric<DescargarArchivoReporteResponse>> DescargarArchivoReporteAsync(
+            string token,
+            DescargarArchivoReporteRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                // 1️⃣ Construcción de parámetros de consulta
+                var queryParams = new Dictionary<string, string>
+                {
+                    ["nomArchivoReporte"] = request.NomArchivoReporte,
+                    ["codTipoArchivoReporte"] = request.CodTipoArchivoReporte.ToString(),
+                    ["perTributario"] = request.PerTributario,
+                    ["codProceso"] = request.CodProceso,
+                    ["numTicket"] = request.NumTicket
+                };
 
+                var queryString = string.Join("&", queryParams
+                    .Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+
+                // 2️⃣ Construcción de URL completa
+                var url =
+                    $"v1/contribuyente/migeigv/libros/rvierce/gestionprocesosmasivos/web/masivo/archivoreporte?{queryString}";
+
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                httpRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+                httpRequest.Headers.Accept.ParseAdd("application/json");
+
+                // 3️⃣ Envío de solicitud con cancelación
+                using var response = await _httpClient
+                    .SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var statusCode = (int)response.StatusCode;
+
+                // 4️⃣ Manejo de errores HTTP
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+                    string errorMessage;
+                    try
+                    {
+                        var errorObj = JsonConvert.DeserializeObject<SunatErrorResponse>(errorContent);
+                        errorMessage = errorObj?.Msg ??
+                                       errorObj?.Errors?.FirstOrDefault()?.Msg ??
+                                       $"Error {statusCode}: {response.ReasonPhrase}";
+                    }
+                    catch
+                    {
+                        errorMessage = $"Error {statusCode}: {response.ReasonPhrase}";
+                    }
+
+                    return ResponseFactory.Error<DescargarArchivoReporteResponse>(
+                        errorMessage,
+                        "SUNAT_ERROR",
+                        statusCode
+                    );
+                }
+
+                // 5️⃣ Leer bytes del archivo
+                var archivoBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+                if (archivoBytes == null || archivoBytes.Length == 0)
+                {
+                    return ResponseFactory.Error<DescargarArchivoReporteResponse>(
+                        "La respuesta del servicio no contiene datos.",
+                        "EMPTY_RESPONSE",
+                        statusCode
+                    );
+                }
+
+                // 6️⃣ Construir respuesta exitosa
+                var data = new DescargarArchivoReporteResponse
+                {
+                    Archivo = archivoBytes,
+                    NombreArchivo = request.NomArchivoReporte
+                };
+
+                return ResponseFactory.Success(
+                    data,
+                    "Archivo descargado correctamente.",
+                    statusCode
+                );
+            }
+            catch (HttpRequestException ex)
+            {
+                return ResponseFactory.Error<DescargarArchivoReporteResponse>(
+                    $"Error de red al conectarse con SUNAT: {ex.Message}",
+                    "HTTP_REQUEST_EXCEPTION",
+                    500
+                );
+            }
+            catch (TaskCanceledException ex)
+            {
+                return ResponseFactory.Error<DescargarArchivoReporteResponse>(
+                    $"Timeout al intentar descargar el archivo: {ex.Message}",
+                    "TIMEOUT_EXCEPTION",
+                    504
+                );
+            }
+            catch (Exception ex)
+            {
+                return ResponseFactory.Error<DescargarArchivoReporteResponse>(
+                    $"Error inesperado: {ex.Message}",
+                    "GENERAL_EXCEPTION",
+                    500
+                );
+            }
+        }
     }
 }

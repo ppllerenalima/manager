@@ -7,6 +7,7 @@ global using Manager.Domain.Responses.CpeResponses;
 global using Manager.Domain.Responses.SireComprasReponses;
 global using Manager.Domain.Services.Interfaces;
 global using Manager.Domain.Settings;
+global using Manager.Infrastructure.ExternalServices.ClienteSol.Client;
 global using Manager.Infrastructure.ExternalServices.Cpe.Client;
 global using Manager.Infrastructure.ExternalServices.Sire.Client;
 global using Manager.Infrastructure.Http;

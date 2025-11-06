@@ -29,46 +29,21 @@ namespace Manager.API.Controllers
             _logger = logger;
         }
 
-        [HttpGet("{Id:Guid}/token")]
-        public async Task<IActionResult> GetToken(Guid Id)
-        {
-            var cliente = await _clienteSunatService.GetClienteAsync(new GetClienteRequest { Id = Id });
+        //[HttpGet("{Id:Guid}/token")]
+        //public async Task<IActionResult> GetToken(Guid Id)
+        //{
+        //    var cliente = await _clienteSunatService.GetClienteAsync(new GetClienteRequest { Id = Id });
 
-            var token = await _sireComprasService.AccessTokenAsync(new SunatAuthRequest
-            {
-                ClientId = cliente.ClientId,
-                ClientSecret = cliente.ClientSecret,
-                Username = $"{cliente.Ruc}{cliente.Username}",
-                Password = cliente.Password
-            });
+        //    var token = await _sireComprasService.AccessTokenAsync(new SunatAuthRequest
+        //    {
+        //        ClientId = cliente.ClientId,
+        //        ClientSecret = cliente.ClientSecret,
+        //        Username = $"{cliente.Ruc}{cliente.Username}",
+        //        Password = cliente.Password
+        //    });
 
-            return Ok(token);
-        }
-
-        [HttpPost("aceptar-propuesta")]
-        public async Task<IActionResult> AceptarPropuesta([FromBody] AceptarPropuestaRequest request)
-        {
-            if (request == null || string.IsNullOrWhiteSpace(request.AccessToken) || string.IsNullOrWhiteSpace(request.PeriodoTributario))
-            {
-                return BadRequest("AccessToken y PeriodoTributario son obligatorios.");
-            }
-
-            try
-            {
-                var resultado = await _sireComprasService.AceptarPropuestaAsync(request);
-
-                if (resultado.FueAceptada)
-                    return Ok(resultado);
-
-                // No fue aceptada pero tampoco es un error de servidor
-                return UnprocessableEntity(resultado);
-            }
-            catch (Exception ex)
-            {
-                // Aquí puedes registrar el error en logs si deseas
-                return StatusCode(500, new { mensaje = "Error interno al procesar la solicitud.", detalle = ex.Message });
-            }
-        }
+        //    return Ok(token);
+        //}
 
         [HttpPost("descargar-propuesta")]
         public async Task<IActionResult> DescargarPropuesta([FromBody] DescargarPropuestaRequest request)
@@ -103,13 +78,15 @@ namespace Manager.API.Controllers
                 // 🧩 Paso 1: Obtener token válido
                 var token = await _tokenService.GetOrGenerateActiveTokenAsync(request.ClienteId);
 
+                if (!token.Success || string.IsNullOrEmpty(token.Data?.AccessToken)) return StatusCode(token.StatusCode, token.Message);
+
                 // 🧩 Paso 2: Obtener o generar ticket válido
-                var ticket = await ObtenerTicketValidoAsync(token.AccessToken, request);
+                var ticket = await ObtenerTicketValidoAsync(token.Data.AccessToken, request);
                 if (ticket == null)
                     return StatusCode(202, "No se pudo obtener un ticket válido para este periodo.");
 
                 // 🧩 Paso 3: Descargar archivo de reporte SUNAT
-                var archivoResponse = await DescargarArchivoValidoAsync(token.AccessToken, ticket, request);
+                var archivoResponse = await DescargarArchivoValidoAsync(token.Data.AccessToken, ticket, request);
                 if (!archivoResponse.Success || archivoResponse.Data?.Archivo == null)
                     return StatusCode(502, archivoResponse.Message ?? "El archivo no está disponible todavía.");
 

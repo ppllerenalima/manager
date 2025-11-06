@@ -1,6 +1,4 @@
-﻿using Manager.Infrastructure.ExternalServices.Sire.Client;
-
-namespace Manager.Infrastructure.Extensions
+﻿namespace Manager.Infrastructure.Extensions
 {
     public static class HttpClientConfiguration
     {
@@ -32,6 +30,13 @@ namespace Manager.Infrastructure.Extensions
             services.AddHttpClient<MigeigvClient>(client =>
             {
                 client.BaseAddress = new Uri(externalConfig["SireSunatApiBaseUrl"]);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.Timeout = TimeSpan.FromSeconds(15);
+            });
+
+            services.AddHttpClient<ClientesSolClient>(client =>
+            {
+                client.BaseAddress = new Uri(externalConfig["SeguridadSunatApiBaseUrl"]);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 client.Timeout = TimeSpan.FromSeconds(15);
             });

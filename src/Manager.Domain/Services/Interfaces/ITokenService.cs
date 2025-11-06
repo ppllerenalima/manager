@@ -1,6 +1,3 @@
-using Manager.Domain.Requests.Token;
-using Manager.Domain.Responses.TokenResponses;
-
 namespace Manager.Domain.Services.Interfaces
 {
     public interface ITokenService
@@ -9,6 +6,6 @@ namespace Manager.Domain.Services.Interfaces
         Task<TokenResponse> AddTokenAsync(AddTokenRequest request);
         Task<TokenResponse> EditTokenAsync(EditTokenRequest request);
         Task<TokenResponse> DeleteTokenAsync(DeleteTokenRequest request);
-        Task<TokenResponse> GetOrGenerateActiveTokenAsync(Guid clienteId);
+        Task<BaseResponseGeneric<TokenResponse>> GetOrGenerateActiveTokenAsync(Guid clienteId, CancellationToken cancellationToken = default);
     }
 }

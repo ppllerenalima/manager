@@ -24,13 +24,13 @@ namespace Manager.API.Controllers
         }
 
         [HttpPost("descargar-zip")]
-        public async Task<IActionResult> DescargarZip_Postman([FromQuery] Guid clienteId, [FromBody] DescargarZipRequest request)
+        public async Task<IActionResult> DescargarZip([FromQuery] Guid clienteId, [FromBody] DescargarZipRequest request)
         {
             // 1️⃣ Obtener token limpio
             var token = await _tokenService.GetOrGenerateActiveTokenAsync(clienteId);
 
             // 2️⃣ Ejecutar el proceso con fallback (ControlCpe → ConsultaCpe)
-            var result = await _cpeService.DescargarZipAsync(token.AccessToken, request);
+            var result = await _cpeService.DescargarZipAsync(token.Data.AccessToken, request);
 
             // 3️⃣ Validar si la operación fue exitosa
             if (!result.Success || result.Data == null)
@@ -79,7 +79,7 @@ namespace Manager.API.Controllers
                 var token = await _tokenService.GetOrGenerateActiveTokenAsync(clienteId);
 
                 // 2️⃣ Descargar desde los servicios SUNAT (con fallback)
-                var response = await _cpeService.DescargarPorConsultaCpeAsync(token.AccessToken, request);
+                var response = await _cpeService.DescargarPorConsultaCpeAsync(token.Data.AccessToken, request);
 
                 // 3️⃣ Retornar archivo o error
                 if (response.Success)

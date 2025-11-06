@@ -8,13 +8,13 @@ namespace Manager.API.Controllers
     {
         private readonly ITokenBaseService _tokenBaseService;
         private readonly ICuentaBaseSolService _cuentaBaseSolService;
-        private readonly ISireComprasService _sireComprasService;
+        private readonly IClienteSolService _clienteSolService;
 
-        public TokenBaseController(ITokenBaseService tokenBaseService, ICuentaBaseSolService cuentaBaseSolService, ISireComprasService sireComprasService)
+        public TokenBaseController(ITokenBaseService tokenBaseService, ICuentaBaseSolService cuentaBaseSolService, IClienteSolService clienteSolService)
         {
             _tokenBaseService = tokenBaseService;
             _cuentaBaseSolService = cuentaBaseSolService;
-            _sireComprasService = sireComprasService;
+            _clienteSolService = clienteSolService;
         }
 
         [HttpGet("cuentaBaseSols/tokenBase-activo")]
@@ -39,7 +39,7 @@ namespace Manager.API.Controllers
             }
 
             // 3. Solicita nuevo tokenBase a SUNAT
-            var authResponse = await _sireComprasService.AccessTokenAsync(new SunatAuthRequest
+            var authResponse = await _clienteSolService.AccessTokenAsync(new SunatAuthRequest
             {
                 ClientId = cuentaBaseSol.ClientId,
                 ClientSecret = cuentaBaseSol.ClientSecret,
@@ -47,19 +47,19 @@ namespace Manager.API.Controllers
                 Password = cuentaBaseSol.Password
             });
 
-            if (!authResponse.EsExito)
+            if (!authResponse.Success)
                 return StatusCode(502, "Error al obtener tokenBase desde SUNAT.");
 
             // 4. Calcula fechas
             DateTime ahora = DateTime.UtcNow;
-            DateTime expiracion = ahora.AddSeconds(authResponse.ExpiresIn);
+            DateTime expiracion = ahora.AddSeconds(authResponse.Data.ExpiresIn);
 
             // 5. Guarda el tokenBase (nuevo o actualización)
             if (tokenBaseBD == null)
             {
                 await _tokenBaseService.AddTokenBaseAsync(new AddTokenBaseRequest
                 {
-                    AccessToken = authResponse.AccessToken,
+                    AccessToken = authResponse.Data.AccessToken,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
 
@@ -72,7 +72,7 @@ namespace Manager.API.Controllers
                 {
                     Id = tokenBaseBD.Id,
 
-                    AccessToken = authResponse.AccessToken,
+                    AccessToken = authResponse.Data.AccessToken,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
 
@@ -81,7 +81,7 @@ namespace Manager.API.Controllers
             }
 
             // 6. Devuelve tokenBase actualizado
-            return Ok(new { accessTokenBase = authResponse.AccessToken });
+            return Ok(new { accessTokenBase = authResponse.Data.AccessToken });
         }
     }
 }

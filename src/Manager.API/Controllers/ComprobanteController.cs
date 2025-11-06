@@ -119,7 +119,7 @@ namespace Manager.API.Controllers
                 // 2️⃣ Ejecutar servicio principal
                 var result = await _comprobanteService.ImportarGlosaAsync(
                     request.PerTributarioId,
-                    token.AccessToken,
+                    token.Data.AccessToken,
                     cancellationToken);
 
                 // 3️⃣ Construir respuesta uniforme usando BaseResponseGeneric

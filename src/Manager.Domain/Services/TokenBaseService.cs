@@ -10,8 +10,9 @@ namespace Manager.Domain.Services
 
         private readonly ICuentaBaseSolService _cuentaBaseSolService;
         private readonly ISireComprasService _sireComprasService;
+        private readonly IClienteSolService _clienteSolService;
 
-        public TokenBaseService(ITokenBaseRepository tokenCuentaBaseSolRepository, IMapper tokenMapper, ICuentaBaseSolService cuentaBaseSolService, ISireComprasService sireComprasService, ILogger<TokenBaseService> logger)
+        public TokenBaseService(ITokenBaseRepository tokenCuentaBaseSolRepository, IMapper tokenMapper, ICuentaBaseSolService cuentaBaseSolService, ISireComprasService sireComprasService, IClienteSolService clienteSolService, ILogger<TokenBaseService> logger)
         {
             _repo = tokenCuentaBaseSolRepository;
             _mapper = tokenMapper;
@@ -19,6 +20,7 @@ namespace Manager.Domain.Services
 
             _cuentaBaseSolService = cuentaBaseSolService;
             _sireComprasService = sireComprasService;
+            _clienteSolService = clienteSolService;
         }
 
         public async Task<TokenBaseResponse> GetTokenBaseAsync(GetTokenBaseRequest request)
@@ -85,7 +87,7 @@ namespace Manager.Domain.Services
             }
 
             // 4. Solicitar nuevo token a SUNAT
-            var authResponse = await _sireComprasService.AccessTokenAsync(new SunatAuthRequest
+            var authResponse = await _clienteSolService.AccessTokenAsync(new SunatAuthRequest
             {
                 ClientId = cuentaBaseSol.ClientId,
                 ClientSecret = cuentaBaseSol.ClientSecret,
@@ -93,18 +95,18 @@ namespace Manager.Domain.Services
                 Password = cuentaBaseSol.Password
             });
 
-            if (!authResponse.EsExito)
+            if (!authResponse.Success)
                 throw new ApplicationException("Error al obtener token desde SUNAT");
 
             // 5. Guardar token en BD
             var ahora = DateTime.UtcNow;
-            var expiracion = ahora.AddSeconds(authResponse.ExpiresIn);
+            var expiracion = ahora.AddSeconds(authResponse.Data.ExpiresIn);
 
             if (tokenBD == null)
             {
                 tokenBD = await AddTokenBaseAsync(new AddTokenBaseRequest
                 {
-                    AccessToken = authResponse.AccessToken,
+                    AccessToken = authResponse.Data.AccessToken,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
                     CuentaBaseSolId = cuentaBaseSol.Id,
@@ -115,7 +117,7 @@ namespace Manager.Domain.Services
                 tokenBD = await EditTokenBaseAsync(new EditTokenBaseRequest
                 {
                     Id = tokenBD.Id,
-                    AccessToken = authResponse.AccessToken,
+                    AccessToken = authResponse.Data.AccessToken,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
                     CuentaBaseSolId = cuentaBaseSolId

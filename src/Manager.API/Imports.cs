@@ -30,3 +30,4 @@ global using Microsoft.AspNetCore.Mvc.Filters;
 global using Microsoft.EntityFrameworkCore;
 global using System.Diagnostics;
 global using System.Text.Json.Serialization;
+global using Manager.Domain.Requests.Token;

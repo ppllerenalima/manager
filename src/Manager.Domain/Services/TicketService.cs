@@ -1,5 +1,3 @@
-using Manager.Domain.Services.Interfaces;
-
 namespace Manager.Domain.Services
 {
     public class TicketService : ITicketService
@@ -7,6 +5,7 @@ namespace Manager.Domain.Services
         private readonly IMapper _mapper;
         private readonly ITicketRepository _repo;
         private readonly ILogger<TicketService> _logger;
+        
         private readonly ISireComprasService _sireComprasService;
 
         public TicketService(ITicketRepository tokenClienteRepository, IMapper tokenClienteMapper, ISireComprasService sireComprasService, ILogger<TicketService> logger)
@@ -91,10 +90,10 @@ namespace Manager.Domain.Services
                         PerTributario = request.perTributario
                     });
 
-                if (generarTicket == null || string.IsNullOrEmpty(generarTicket.Result.NumTicket))
+                if (generarTicket == null || string.IsNullOrEmpty(generarTicket.Data.NumTicket))
                     throw new ApplicationException("No se pudo generar un nuevo ticket en SUNAT.");
 
-                numTicket = generarTicket.Result.NumTicket;
+                numTicket = generarTicket.Data.NumTicket;
             }
 
             var estadoTicket = await _sireComprasService.ConsultarEstadoTicketAsync(
@@ -108,7 +107,7 @@ namespace Manager.Domain.Services
                         NumTicket = numTicket
                     });
 
-            var registro = ObtenerPrimerRegistro(estadoTicket.Data);
+            var registro = estadoTicket.Data.Registros.First();
 
             var updatedTicket = await ActualizarTicketAsync(ticketEncontrado.Id, registro, request);
 
@@ -134,40 +133,6 @@ namespace Manager.Domain.Services
             return !string.IsNullOrEmpty(ticket.FecCargaImportacion)
                 && DateTime.TryParse(ticket.FecCargaImportacion, out var fechaTicket)
                 && fechaTicket.AddDays(15) < DateTime.Now;
-        }
-
-        //private async Task<ConsultarEstadoTicketResponse> ConsultarEstadoTicketAsync(
-        //    string token, string numTicket, GetTicketRequest request)
-        //{
-        //    var estadoTicket = await _sireComprasService.ConsultarEstadoTicketAsync(
-        //        new ConsultarEstadoTicketRequest
-        //        {
-        //            AccessToken = token,
-        //            PerIni = request.perTributario,
-        //            PerFin = request.perTributario,
-        //            Page = request.Page,
-        //            PerPage = request.PerPage,
-        //            NumTicket = numTicket
-        //        });
-
-        //    if (estadoTicket == null ||
-        //        !estadoTicket.Success ||
-        //        estadoTicket.Data.Result?.Registros == null ||
-        //        !estadoTicket.Data.Result.Registros.Any())
-        //    {
-        //        var mensajeError = estadoTicket?.Data.Errores != null && estadoTicket.Data.Errores.Any()
-        //            ? string.Join(" | ", estadoTicket.Data.Errores.Select(e => $"[{e.Cod}] {e.Msg}"))
-        //            : "Error al consultar ticket en SUNAT.";
-
-        //        throw new ApplicationException(mensajeError);
-        //    }
-
-        //    return estadoTicket;
-        //}
-
-        private Registro ObtenerPrimerRegistro(ConsultaEstadoTicketsResponse estadoTicket)
-        {
-            return estadoTicket.Registros.First();
         }
 
         private async Task<TicketResponse> ActualizarTicketAsync(
@@ -209,7 +174,7 @@ namespace Manager.Domain.Services
                     PerTributario = request.perTributario
                 });
 
-            if (generarTicket == null || string.IsNullOrEmpty(generarTicket.Result.NumTicket))
+            if (generarTicket == null || string.IsNullOrEmpty(generarTicket.Data.NumTicket))
                 throw new ApplicationException("No se pudo generar un nuevo ticket en SUNAT.");
 
             // 2. Consultar estado del ticket generado
@@ -221,7 +186,7 @@ namespace Manager.Domain.Services
                     PerFin = request.perTributario,
                     Page = request.Page,
                     PerPage = request.PerPage,
-                    NumTicket = generarTicket.Result.NumTicket
+                    NumTicket = generarTicket.Data.NumTicket
                 });
 
             if (estadoTicket?.Success != true || estadoTicket.Data.Registros == null || !estadoTicket.Data.Registros.Any())
