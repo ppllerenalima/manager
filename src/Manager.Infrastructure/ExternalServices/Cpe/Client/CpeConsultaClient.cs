@@ -10,27 +10,37 @@
         }
 
         public async Task<BaseResponseGeneric<DescargarZipResponse>> DescargarAsync(
-            string token, 
-            DescargarZipRequest request, 
+            string token,
+            DescargarZipRequest request,
             CancellationToken cancellationToken)
         {
             try
             {
-                // 1️⃣ Construcción de URL
-                var url = $"v1/contribuyente/consultacpe/comprobantes/{request.RucEmisor}-{request.TipoComprobante}-{request.Serie}-{request.Numero}-2/{request.Tipo}";
+                // 🔹 Determinar sufijo según tipo
+                // Tipo: "01" → ZIP con PDF, "02" → ZIP con XML, vacío → solo JSON (consulta)
+                var tipoSufijo = string.IsNullOrEmpty(request.Tipo)
+                    ? string.Empty
+                    : $"/{request.Tipo}";
+
+                // 🔹 Determinar procedencia (-1 = venta, -2 = compra)
+                var procedencia = request.EsVenta ? "-1" : "-2";
+
+                // 🔹 Construcción dinámica de URL
+                var url = $"v1/contribuyente/consultacpe/comprobantes/{request.RucEmisor}-{request.TipoComprobante}-{request.Serie}-{request.Numero}{procedencia}{tipoSufijo}";
 
                 using var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                httpRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0");
+                httpRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
                 httpRequest.Headers.Accept.ParseAdd("application/json");
 
-                // 2️⃣ Enviar la solicitud con cancelación
-                using var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                var statusCode = (int)response.StatusCode;
+                using var response = await _httpClient
+                    .SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false);
 
+                var statusCode = (int)response.StatusCode;
                 var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
-                // 3️⃣ Manejo de error HTTP
+                // ❌ Manejo de error HTTP
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorMessage = ExternalServiceHelper.CleanErrorContent(content, statusCode);
@@ -41,6 +51,7 @@
                     );
                 }
 
+                // ⚠️ Si la respuesta está vacía
                 if (string.IsNullOrWhiteSpace(content))
                 {
                     return ResponseFactory.Error<DescargarZipResponse>(
@@ -50,42 +61,90 @@
                     );
                 }
 
-                // 4️⃣ Deserializar
-                ConsultaCpeComprobanteResponse? resultado;
+                // 🔍 Caso 1: si se solicitó ZIP (PDF o XML)
+                if (!string.IsNullOrEmpty(request.Tipo))
+                {
+                    // El servicio devuelve Base64
+                    ConsultaCpeComprobanteResponse? resultado;
+                    try
+                    {
+                        resultado = JsonConvert.DeserializeObject<ConsultaCpeComprobanteResponse>(content);
+                    }
+                    catch (Newtonsoft.Json.JsonException ex)
+                    {
+                        return ResponseFactory.Error<DescargarZipResponse>(
+                            $"Error al deserializar la respuesta ZIP: {ex.Message}",
+                            "DESERIALIZATION_ERROR",
+                            statusCode
+                        );
+                    }
+
+                    if (resultado == null)
+                    {
+                        return ResponseFactory.Error<DescargarZipResponse>(
+                            "No se pudo deserializar la respuesta ZIP del servicio.",
+                            "NULL_RESPONSE_OBJECT",
+                            statusCode
+                        );
+                    }
+
+                    var archivoBytes = string.IsNullOrEmpty(resultado.ValArchivo)
+                        ? Array.Empty<byte>()
+                        : Convert.FromBase64String(resultado.ValArchivo);
+
+                    var nombreArchivo = resultado.NomArchivo ??
+                        (request.Tipo == "01" ? "archivo_pdf.zip" :
+                         request.Tipo == "02" ? "archivo_xml.zip" : "archivo.zip");
+
+                    var data = new DescargarZipResponse
+                    {
+                        Tipo = request.Tipo,
+                        Archivo = archivoBytes,
+                        NombreArchivo = nombreArchivo
+                    };
+
+                    return ResponseFactory.Success(
+                        data,
+                        $"Archivo descargado correctamente ({(request.Tipo == "01" ? "PDF" : "XML")}).",
+                        statusCode
+                    );
+                }
+
+                // 🔍 Caso 2: solo consulta (JSON estructurado)
                 try
                 {
-                    resultado = JsonConvert.DeserializeObject<ConsultaCpeComprobanteResponse>(content);
+                    var resultadoJson = JsonConvert.DeserializeObject<ConsultaCpeConsultaResponse>(content);
+
+                    if (resultadoJson == null)
+                    {
+                        return ResponseFactory.Error<DescargarZipResponse>(
+                            "No se pudo deserializar la respuesta de consulta.",
+                            "NULL_JSON_RESPONSE",
+                            statusCode
+                        );
+                    }
+
+                    // Mapeo ligero a DescargarZipResponse (opcional)
+                    var data = new DescargarZipResponse
+                    {
+                        NombreArchivo = "consulta.json",
+                        Archivo = System.Text.Encoding.UTF8.GetBytes(content)
+                    };
+
+                    return ResponseFactory.Success(
+                        data,
+                        "Consulta de comprobante realizada correctamente.",
+                        statusCode
+                    );
                 }
-                catch (System.Text.Json.JsonException ex)
+                catch (Newtonsoft.Json.JsonException ex)
                 {
                     return ResponseFactory.Error<DescargarZipResponse>(
-                        $"Error al deserializar la respuesta: {ex.Message}",
+                        $"Error al deserializar la respuesta de consulta: {ex.Message}",
                         "DESERIALIZATION_ERROR",
                         statusCode
                     );
                 }
-
-                if (resultado == null)
-                {
-                    return ResponseFactory.Error<DescargarZipResponse>(
-                        "No se pudo deserializar la respuesta del servicio.",
-                        "NULL_RESPONSE_OBJECT",
-                        statusCode
-                    );
-                }
-
-                // 5️⃣ Convertir base64 a bytes
-                var archivoBytes = string.IsNullOrEmpty(resultado.ValArchivo)
-                    ? Array.Empty<byte>()
-                    : Convert.FromBase64String(resultado.ValArchivo);
-
-                var data = new DescargarZipResponse
-                {
-                    Archivo = archivoBytes,
-                    NombreArchivo = resultado.NomArchivo ?? "archivo.zip"
-                };
-
-                return ResponseFactory.Success(data, "Archivo descargado correctamente.", statusCode);
             }
             catch (HttpRequestException ex)
             {
@@ -97,7 +156,6 @@
             }
             catch (TaskCanceledException ex)
             {
-                // Esto captura timeouts
                 return ResponseFactory.Error<DescargarZipResponse>(
                     $"Timeout al conectar con SUNAT: {ex.Message}",
                     "TIMEOUT_EXCEPTION",

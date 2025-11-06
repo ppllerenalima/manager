@@ -40,6 +40,7 @@
 
                     var data = new DescargarZipResponse
                     {
+                        Tipo = "02",
                         Archivo = archivoBytes,
                         NombreArchivo = $"{request.RucEmisor}-{request.TipoComprobante}-{request.Serie}-{request.Numero}.zip"
                     };

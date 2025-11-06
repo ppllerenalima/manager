@@ -23,23 +23,23 @@ namespace Manager.API.Controllers
             _cuentaBaseSolService = cuentaBaseSolService;
         }
 
-        [HttpPost("descargar-zip")]
-        public async Task<IActionResult> DescargarZip([FromQuery] Guid clienteId, [FromBody] DescargarZipRequest request)
-        {
-            // 1️⃣ Obtener token limpio
-            var token = await _tokenService.GetOrGenerateActiveTokenAsync(clienteId);
+        //[HttpPost("descargar-zip")]
+        //public async Task<IActionResult> DescargarZip([FromQuery] Guid clienteId, [FromBody] DescargarZipRequest request)
+        //{
+        //    // 1️⃣ Obtener token limpio
+        //    var token = await _tokenService.GetOrGenerateActiveTokenAsync(clienteId);
 
-            // 2️⃣ Ejecutar el proceso con fallback (ControlCpe → ConsultaCpe)
-            var result = await _cpeService.DescargarZipAsync(token.Data.AccessToken, request);
+        //    // 2️⃣ Ejecutar el proceso con fallback (ControlCpe → ConsultaCpe)
+        //    var result = await _cpeService.DescargarZipAsync(token.Data.AccessToken, request);
 
-            // 3️⃣ Validar si la operación fue exitosa
-            if (!result.Success || result.Data == null)
-                return StatusCode(result.StatusCode, result); // Devuelve el mismo response estándar
+        //    // 3️⃣ Validar si la operación fue exitosa
+        //    if (!result.Success || result.Data == null)
+        //        return StatusCode(result.StatusCode, result); // Devuelve el mismo response estándar
 
-            // 4️⃣ Preparar el archivo descargado
-            var fileName = $"{result.Data.NombreArchivo}.zip";
-            return File(result.Data.Archivo, "application/zip", fileName);
-        }
+        //    // 4️⃣ Preparar el archivo descargado
+        //    var fileName = $"{result.Data.NombreArchivo}.zip";
+        //    return File(result.Data.Archivo, "application/zip", fileName);
+        //}
 
         /// <summary>
         /// Descarga el archivo ZIP o PDF asociado a un comprobante electrónico,

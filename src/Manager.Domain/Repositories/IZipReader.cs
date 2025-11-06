@@ -3,5 +3,6 @@
     public interface IZipReader
     {
         string ExtractXmlFromZip(byte[] zipFile);
+        string ExtractJsonFromZip(byte[] zipBytes);
     }
 }

@@ -75,7 +75,6 @@
                                     TipoComprobante = cpe.TipoComprobante,
                                     Numero = Convert.ToInt32(cpe.Numero),
                                     Serie = cpe.Serie,
-                                    Tipo = "02"
                                 }));
 
                             _logger.LogInformation("Descarga de ZIP completada para comprobante {Serie}-{Numero}", cpe.Serie, cpe.Numero);
@@ -83,7 +82,7 @@
 
                             if (zipBytes.Success && zipBytes.Data?.Archivo != null)
                             {
-                                var resultado = await ProcesarAsync(zipBytes.Data.Archivo, cpe, cts.Token);
+                                var resultado = await ProcesarAsync(zipBytes.Data.Tipo, zipBytes.Data.Archivo, cpe, cts.Token);
 
                                 results.Add(new Comprobante_GlosaResponse
                                 {
@@ -173,28 +172,92 @@
         }
 
         private async Task<BaseResponseGeneric<Comprobante_GlosaResponse>> ProcesarAsync(
-            byte[] zipFile, 
-            Comprobante existingRecord, 
+            string tipo,
+            byte[] zipFile,
+            Comprobante existingRecord,
             CancellationToken cancellationToken)
         {
             var response = new BaseResponseGeneric<Comprobante_GlosaResponse>();
 
             try
             {
-                // 1️⃣ Leer ZIP
-                var xmlContent = _zipReader.ExtractXmlFromZip(zipFile);
+                string glosa = string.Empty;
 
-                // 2️⃣ Parsear XML
-                var invoice = _xmlInvoiceParserService.ParseInvoice(xmlContent);
-                var config = await _configuracionGlobalService.GetConfiguracionGlobalFirstOrDefaultAsync();
-
-                // 3️⃣ Construir glosa
-                var max = config.MaxCaracteresGlosa > 0 ? config.MaxCaracteresGlosa : 100;
-                var glosa = string.Join("; ", invoice.InvoiceLines.Select(l =>
+                if (tipo?.Equals("02") == true)
                 {
-                    var desc = l.Description ?? string.Empty;
-                    return desc.Length > max ? desc.Substring(0, max) + "..." : desc;
-                }));
+                    // 🔹 Caso 1️⃣: ZIP que contiene XML
+                    try
+                    {
+                        // 1️⃣ Leer XML del ZIP
+                        var xmlContent = _zipReader.ExtractXmlFromZip(zipFile);
+
+                        // 2️⃣ Parsear XML a entidad de factura
+                        var invoice = _xmlInvoiceParserService.ParseInvoice(xmlContent);
+
+                        // 3️⃣ Obtener configuración global
+                        var config = await _configuracionGlobalService.GetConfiguracionGlobalFirstOrDefaultAsync();
+                        var max = config.MaxCaracteresGlosa > 0 ? config.MaxCaracteresGlosa : 100;
+
+                        // 4️⃣ Construir glosa desde las descripciones del XML
+                        glosa = string.Join("; ", invoice.InvoiceLines.Select(l =>
+                        {
+                            var desc = l.Description ?? string.Empty;
+                            return desc.Length > max ? desc.Substring(0, max) + "..." : desc;
+                        }));
+
+                        if (string.IsNullOrWhiteSpace(glosa))
+                            glosa = "Sin detalle de ítems (XML).";
+                    }
+                    catch (Exception ex)
+                    {
+                        glosa = $"Error al procesar XML: {ex.Message}";
+                    }
+                }
+                else if (tipo is null)
+                {
+                    // 🔹 Caso 2️⃣: ZIP que contiene JSON (ConsultaCpeConsultaResponse)
+                    try
+                    {
+                        // 1️⃣ Leer JSON del ZIP
+                        var jsonContent = _zipReader.ExtractJsonFromZip(zipFile);
+
+                        // 2️⃣ Deserializar al modelo ConsultaCpeConsultaResponse
+                        var consultaResponse = JsonConvert.DeserializeObject<ConsultaCpeConsultaResponse>(jsonContent);
+
+                        if (consultaResponse?.Comprobantes == null || !consultaResponse.Comprobantes.Any())
+                        {
+                            glosa = "Sin información de comprobantes en el JSON.";
+                        }
+                        else
+                        {
+                            var comprobante = consultaResponse.Comprobantes.First(); // suele venir solo uno
+                            var items = comprobante.InformacionItems ?? new List<InformacionItemCpe>();
+
+                            // 3️⃣ Obtener configuración global
+                            var config = await _configuracionGlobalService.GetConfiguracionGlobalFirstOrDefaultAsync();
+                            var max = config.MaxCaracteresGlosa > 0 ? config.MaxCaracteresGlosa : 100;
+
+                            // 4️⃣ Construir glosa desde las descripciones de los ítems
+                            glosa = string.Join("; ", items.Select(i =>
+                            {
+                                var desc = i.DesItem ?? string.Empty;
+                                return desc.Length > max ? desc.Substring(0, max) + "..." : desc;
+                            }));
+
+                            if (string.IsNullOrWhiteSpace(glosa))
+                                glosa = "Sin detalle de ítems (JSON).";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        glosa = $"Error al procesar JSON: {ex.Message}";
+                    }
+                }
+                else
+                {
+                    glosa = "Tipo de archivo no reconocido para generar glosa.";
+                }
+
 
                 // 4️⃣ Guardar en BD
                 existingRecord.Glosa = glosa;

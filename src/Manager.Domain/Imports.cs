@@ -43,6 +43,7 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
 global using Microsoft.IdentityModel.Tokens;
+global using Newtonsoft.Json;
 global using System.Collections.Concurrent;
 global using System.IdentityModel.Tokens.Jwt;
 global using System.Linq.Expressions;
