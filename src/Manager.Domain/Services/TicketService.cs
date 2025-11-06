@@ -53,8 +53,8 @@
 
                     if (!generarTicket.Success || string.IsNullOrEmpty(generarTicket.Data?.NumTicket))
                         return ResponseFactory.Error<TicketResponse>(
-                            generarTicket.Message ?? "No se pudo generar el nuevo ticket.",
-                            generarTicket.ErrorCode ?? "GENERAR_TICKET_ERROR",
+                            generarTicket.Message!,
+                            generarTicket.ErrorCode,
                             generarTicket.StatusCode,
                             generarTicket.Details
                         );
@@ -76,8 +76,8 @@
 
                 if (!estadoTicket.Success || estadoTicket.Data?.Registros == null || !estadoTicket.Data.Registros.Any())
                     return ResponseFactory.Error<TicketResponse>(
-                        estadoTicket.Message ?? "No se pudo obtener el estado del ticket.",
-                        estadoTicket.ErrorCode ?? "CONSULTAR_TICKET_ERROR",
+                        estadoTicket.Message!,
+                        estadoTicket.ErrorCode,
                         estadoTicket.StatusCode,
                         estadoTicket.Details
                     );
@@ -109,8 +109,8 @@
 
                 if (!updatedTicket.Success)
                     return ResponseFactory.Error<TicketResponse>(
-                        updatedTicket.Message ?? "No se pudo actualizar el ticket.",
-                        updatedTicket.ErrorCode ?? "UPDATE_TICKET_ERROR",
+                        updatedTicket.Message,
+                        updatedTicket.ErrorCode,
                         updatedTicket.StatusCode,
                         updatedTicket.Details
                     );
@@ -319,9 +319,9 @@
 
                 // 3️⃣ Tomar el primer registro
                 var registro = estadoTicket.Data.Registros.First();
-                var detalle = registro.DetalleTicket;
+                var detalle = registro.DetalleTicket!;
                 var archivo = registro.ArchivoReporte?.FirstOrDefault();
-                var estadoEnvio = detalle?.CodEstadoEnvio;
+                var estadoEnvio = detalle.CodEstadoEnvio;
 
                 // 4️⃣ Guardar el ticket en la base de datos
                 var nuevoTicket = await AddTicketAsync(new AddTicketRequest
@@ -332,10 +332,10 @@
                     PerTributario = registro.PerTributario,
 
                     NumTicket = registro.NumTicket,
-                    FecCargaImportacion = detalle?.FecCargaImportacion,
-                    HoraCargaImportacion = detalle?.HoraCargaImportacion,
+                    FecCargaImportacion = detalle.FecCargaImportacion,
+                    HoraCargaImportacion = detalle.HoraCargaImportacion,
                     CodEstadoEnvio = estadoEnvio,
-                    DesEstadoEnvio = detalle?.DesEstadoEnvio,
+                    DesEstadoEnvio = detalle.DesEstadoEnvio,
 
                     CodTipoAchivoReporte = archivo?.CodTipoAchivoReporte,
                     NomArchivoReporte = archivo?.NomArchivoReporte,
@@ -355,7 +355,7 @@
 
                 // 5️⃣ Devolver ticket creado exitosamente
                 return ResponseFactory.Success(
-                    nuevoTicket.Data,
+                    nuevoTicket.Data!,
                     "Ticket generado y registrado correctamente.",
                     201
                 );

@@ -1,19 +1,16 @@
-﻿using Manager.Domain.Requests.Ticket;
-using Manager.Domain.Responses.ErroresResponses;
-using Manager.Domain.Services;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Manager.Infrastructure.ExternalServices.Sire
 {
     public class SireComprasService : ISireComprasService
     {
         private readonly MigeigvClient _migeigvClient;
-        private readonly TicketService _ticketService;
+        private readonly IServiceProvider _serviceProvider;
 
-
-        public SireComprasService(MigeigvClient migeigvClient, TicketService ticketService)
+        public SireComprasService(MigeigvClient migeigvClient, IServiceProvider serviceProvider)
         {
             _migeigvClient = migeigvClient;
-            _ticketService = ticketService;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<BaseResponseGeneric<ExportacionComprobantePropuestaResponse>> DescargarPropuestaRCEAsync(DescargarPropuestaRequest request, CancellationToken cancellationToken)
@@ -37,7 +34,10 @@ namespace Manager.Infrastructure.ExternalServices.Sire
             // ⚙️ Si hay error 2244 (ticket expirado), intentar uno nuevo automáticamente
             if (!archivoResponse.Success && EsError2244(archivoResponse.Data))
             {
-                var nuevoTicket = await _ticketService.GetOrGenerateActiveTicketAsync(token, new GetTicketRequest
+                // ✅ Rompe el ciclo: resuelve TicketService solo en este punto
+                var ticketService = _serviceProvider.GetRequiredService<ITicketService>();
+
+                var nuevoTicket = await ticketService.GetOrGenerateActiveTicketAsync(token, new GetTicketRequest
                 {
                     clienteId = clienteId,
                     perTributario = request.PerTributario

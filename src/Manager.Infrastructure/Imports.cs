@@ -2,9 +2,12 @@
 global using Manager.Domain.Repositories;
 global using Manager.Domain.Requests.Cpe;
 global using Manager.Domain.Requests.Sire.Compras;
+global using Manager.Domain.Requests.Ticket;
 global using Manager.Domain.Responses;
 global using Manager.Domain.Responses.CpeResponses;
+global using Manager.Domain.Responses.ErroresResponses;
 global using Manager.Domain.Responses.SireComprasReponses;
+global using Manager.Domain.Services;
 global using Manager.Domain.Services.Interfaces;
 global using Manager.Domain.Settings;
 global using Manager.Infrastructure.ExternalServices.ClienteSol;

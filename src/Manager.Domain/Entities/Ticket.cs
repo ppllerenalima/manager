@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Manager.Domain.Entities
+﻿namespace Manager.Domain.Entities
 {
     public class Ticket : EntityBase
     {
@@ -19,8 +13,8 @@ namespace Manager.Domain.Entities
         public string CodEstadoEnvio { get; set; }
         public string DesEstadoEnvio { get; set; }
 
-        public string CodTipoAchivoReporte { get; set; }
-        public string NomArchivoReporte { get; set; }
+        public string? CodTipoAchivoReporte { get; set; } = null;
+        public string? NomArchivoReporte { get; set; } = null;
 
         public Guid ClienteId { get; set; }
         public Cliente Cliente { get; set; }

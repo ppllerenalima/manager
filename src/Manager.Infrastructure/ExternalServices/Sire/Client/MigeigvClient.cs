@@ -100,6 +100,9 @@
                     );
                 }
 
+                //if(!resultado.Registros.First().CodEstadoProceso.Equals("06"))
+
+
                 // 6️⃣ Marcar como éxito
                 return ResponseFactory.Success(
                     resultado,

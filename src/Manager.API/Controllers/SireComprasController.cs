@@ -5,19 +5,21 @@
     public class SireComprasController : ControllerBase
     {
         private readonly ISireComprasService _sireComprasService;
-        private readonly IClienteService _clienteSunatService;
+
         private readonly ITokenService _tokenService;
         private readonly ITicketService _ticketService;
         private readonly IPerTributarioService _perTributarioService;
+        
         private readonly ILogger<SireComprasController> _logger;
 
-        public SireComprasController(ISireComprasService sireComprasService, IClienteService clienteSunatService, ITokenService tokenService, ITicketService ticketService, IPerTributarioService perTributarioService, ILogger<SireComprasController> logger)
+        public SireComprasController(ISireComprasService sireComprasService, ITokenService tokenService, ITicketService ticketService, IPerTributarioService perTributarioService, ILogger<SireComprasController> logger)
         {
             _sireComprasService = sireComprasService;
-            _clienteSunatService = clienteSunatService;
+            
             _tokenService = tokenService;
             _ticketService = ticketService;
             _perTributarioService = perTributarioService;
+
             _logger = logger;
         }
 
@@ -78,9 +80,11 @@
                     clienteId = request.ClienteId,
                     perTributario = $"{request.Anio}{request.Mes:D2}"
                 });
-
                 if(!ticket.Success)
                     return StatusCode(ticket.StatusCode, ticket.Message);
+
+                if (!ticket.Data.CodEstadoEnvio.Equals("06"))
+                    return StatusCode(409, $"El ticket obtenido está en estado {ticket.Data.DesEstadoEnvio.ToUpper()}. Código de estado de envío: {ticket.Data.CodEstadoEnvio}");
 
                 // 🧩 Paso 3: Descargar archivo de reporte SUNAT
                 var archivoResponse = await _sireComprasService.DescargarArchivoReporteAsync(token.Data.AccessToken, request.ClienteId, new DescargarArchivoReporteRequest
@@ -90,10 +94,10 @@
                     CodTipoArchivoReporte = ticket.Data!.CodTipoAchivoReporte,
                     NumTicket = ticket.Data!.NumTicket,
                     CodProceso = ticket.Data!.CodProceso
-                });  
-                
+                });
+
                 if (!archivoResponse.Success || archivoResponse.Data?.Archivo == null)
-                    return StatusCode(archivoResponse.StatusCode, archivoResponse.Message);
+                    return StatusCode(archivoResponse.StatusCode, $"{archivoResponse.Message} - {archivoResponse.Details}");
 
                 // 🧩 Paso 4: Registrar periodo y comprobantes
                 var perTributarioResponse = await _perTributarioService.AddPerTributarioAsync(new AddPerTributarioRequest

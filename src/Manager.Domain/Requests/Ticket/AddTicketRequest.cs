@@ -15,8 +15,8 @@ namespace Manager.Domain.Requests.Ticket
         public string CodEstadoEnvio { get; set; } = string.Empty;
         public string DesEstadoEnvio { get; set; } = string.Empty;
 
-        public string CodTipoAchivoReporte { get; set; } = string.Empty;
-        public string NomArchivoReporte { get; set; } = string.Empty;
+        public string? CodTipoAchivoReporte { get; set; } = null;
+        public string? NomArchivoReporte { get; set; } = null;
 
         public Guid ClienteId { get; set; }
     }
