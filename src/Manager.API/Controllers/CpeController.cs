@@ -78,16 +78,17 @@ namespace Manager.API.Controllers
                 // 1️⃣ Obtener token válido del cliente
                 var token = await _tokenService.GetOrGenerateActiveTokenAsync(clienteId);
 
+                if (!token.Success)
+                    return StatusCode(token.StatusCode, token);
+
                 // 2️⃣ Descargar desde los servicios SUNAT (con fallback)
-                var response = await _cpeService.DescargarPorConsultaCpeAsync(token.Data.AccessToken, request);
+                var response = await _cpeService.DescargarPorConsultaCpeAsync(token.Data!.AccessToken!, request);
 
                 // 3️⃣ Retornar archivo o error
-                if (response.Success)
-                {
-                    return ProcesarPdfDesdeZip(response.Data);
-                }
+                if (!response.Success)
+                    return StatusCode(response.StatusCode, response);
 
-                return StatusCode(response.StatusCode > 0 ? response.StatusCode : 500, response);
+                return ProcesarPdfDesdeZip(response.Data!);
             }
             catch (Exception ex)
             {
