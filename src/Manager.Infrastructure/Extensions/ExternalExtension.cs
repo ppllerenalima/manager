@@ -1,8 +1,4 @@
-﻿using Manager.Domain.Services.Interfaces;
-using Manager.Infrastructure.ExternalServices.Cpe;
-using Manager.Infrastructure.ExternalServices.Sire;
-
-namespace Manager.Infrastructure.Extensions
+﻿namespace Manager.Infrastructure.Extensions
 {
     public static class ExternalExtension
     {
@@ -10,6 +6,7 @@ namespace Manager.Infrastructure.Extensions
         {
             services.AddHttpClient<ISireComprasService, SireComprasService>();
             services.AddScoped<ICpeService, CpeService>();
+            services.AddScoped<IClienteSolService, ClienteSolService>();
 
             return services;
         }

@@ -1,12 +1,4 @@
-﻿using Manager.Domain.Entities.Enum;
-using Manager.Domain.Requests.Ticket;
-using Manager.Domain.Responses;
-using Manager.Domain.Responses.ErroresResponses;
-using Manager.Domain.Responses.PerTributarioResponses;
-using Manager.Domain.Responses.TicketResponses;
-using Manager.Domain.Services.Interfaces;
-
-namespace Manager.API.Controllers
+﻿namespace Manager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -77,18 +69,31 @@ namespace Manager.API.Controllers
             {
                 // 🧩 Paso 1: Obtener token válido
                 var token = await _tokenService.GetOrGenerateActiveTokenAsync(request.ClienteId);
-
-                if (!token.Success || string.IsNullOrEmpty(token.Data?.AccessToken)) return StatusCode(token.StatusCode, token.Message);
+                if (!token.Success || string.IsNullOrEmpty(token.Data?.AccessToken)) 
+                    return StatusCode(token.StatusCode, token.Message);
 
                 // 🧩 Paso 2: Obtener o generar ticket válido
-                var ticket = await ObtenerTicketValidoAsync(token.Data.AccessToken, request);
-                if (ticket == null)
-                    return StatusCode(202, "No se pudo obtener un ticket válido para este periodo.");
+                var ticket = await _ticketService.GetOrGenerateActiveTicketAsync(token.Data.AccessToken, new GetTicketRequest
+                {
+                    clienteId = request.ClienteId,
+                    perTributario = $"{request.Anio}{request.Mes:D2}"
+                });
+
+                if(!ticket.Success)
+                    return StatusCode(ticket.StatusCode, ticket.Message);
 
                 // 🧩 Paso 3: Descargar archivo de reporte SUNAT
-                var archivoResponse = await DescargarArchivoValidoAsync(token.Data.AccessToken, ticket, request);
+                var archivoResponse = await _sireComprasService.DescargarArchivoReporteAsync(token.Data.AccessToken, request.ClienteId, new DescargarArchivoReporteRequest
+                {
+                    PerTributario = $"{request.Anio}{request.Mes:D2}",
+                    NomArchivoReporte = ticket.Data!.NomArchivoReporte,
+                    CodTipoArchivoReporte = ticket.Data!.CodTipoAchivoReporte,
+                    NumTicket = ticket.Data!.NumTicket,
+                    CodProceso = ticket.Data!.CodProceso
+                });  
+                
                 if (!archivoResponse.Success || archivoResponse.Data?.Archivo == null)
-                    return StatusCode(502, archivoResponse.Message ?? "El archivo no está disponible todavía.");
+                    return StatusCode(archivoResponse.StatusCode, archivoResponse.Message);
 
                 // 🧩 Paso 4: Registrar periodo y comprobantes
                 var perTributarioResponse = await _perTributarioService.AddPerTributarioAsync(new AddPerTributarioRequest
@@ -117,209 +122,6 @@ namespace Manager.API.Controllers
                 _logger.LogError(ex, "Error inesperado al importar comprobantes.");
                 return StatusCode(500, new BaseResponse { Success = false, Message = "Error interno del servidor.", StatusCode = 500 });
             }
-        }
-
-        private async Task<TicketResponse?> ObtenerTicketValidoAsync(string token, GetPerTributarioByPeriodoRequest request)
-        {
-            var ticket = await _ticketService.GetOrGenerateActiveTicketAsync(token, new GetTicketRequest
-            {
-                clienteId = request.ClienteId,
-                perTributario = $"{request.Anio}{request.Mes:D2}"
-            });
-
-            // ✅ Si el ticket aún no está aceptado, avisamos
-            if (ticket.CodEstadoEnvio != "06")
-            {
-                _logger.LogInformation("Ticket {Ticket} aún no aceptado (Estado {Estado})", ticket.NumTicket, ticket.CodEstadoEnvio);
-                return null;
-            }
-
-            return ticket;
-        }
-
-        private async Task<BaseResponseGeneric<DescargarArchivoReporteResponse>> DescargarArchivoValidoAsync(
-            string token,
-            TicketResponse ticket,
-            GetPerTributarioByPeriodoRequest request)
-        {
-            var archivoResponse = await _sireComprasService.DescargarArchivoReporteAsync(token, new DescargarArchivoReporteRequest
-            {
-                PerTributario = $"{request.Anio}{request.Mes:D2}",
-                NomArchivoReporte = ticket.NomArchivoReporte,
-                CodTipoArchivoReporte = ticket.CodTipoAchivoReporte,
-                NumTicket = ticket.NumTicket,
-                CodProceso = ticket.CodProceso
-            });
-
-            // ⚙️ Si hay error 2244 (ticket expirado), intentar uno nuevo automáticamente
-            if (!archivoResponse.Success && EsError2244(archivoResponse.Data))
-            {
-                _logger.LogWarning("Ticket {Ticket} expirado. Solicitando nuevo ticket...", ticket.NumTicket);
-
-                var nuevoTicket = await ObtenerTicketValidoAsync(token, request);
-                if (nuevoTicket == null) return archivoResponse;
-
-                return await _sireComprasService.DescargarArchivoReporteAsync(token, new DescargarArchivoReporteRequest
-                {
-                    PerTributario = $"{request.Anio}{request.Mes:D2}",
-                    NomArchivoReporte = nuevoTicket.NomArchivoReporte,
-                    CodTipoArchivoReporte = nuevoTicket.CodTipoAchivoReporte,
-                    NumTicket = nuevoTicket.NumTicket,
-                    CodProceso = nuevoTicket.CodProceso
-                });
-            }
-
-            return archivoResponse;
-        }
-
-        //[HttpPost("importar-comprobantes")]
-        //public async Task<IActionResult> ImportarComprobantesDesdeSunatAsync([FromBody] GetPerTributarioByPeriodoRequest request)
-        //{
-        //    try
-        //    {
-        //        // 1. Obtener token válido
-        //        var token = await _tokenService.GetOrGenerateActiveTokenAsync(request.ClienteId);
-
-        //        // 2. Obtener o generar ticket
-        //        var ticket = await _ticketService.GetOrGenerateActiveTicketAsync(
-        //            token.AccessToken,
-        //            new GetTicketRequest
-        //            {
-        //                clienteId = request.ClienteId,
-        //                perTributario = $"{request.Anio}{request.Mes:D2}"
-        //            });
-
-        //        // 3. Validar estado del ticket
-        //        if (ticket.CodEstadoEnvio != "06")
-        //        {
-        //            return StatusCode(202,
-        //                $"El ticket {ticket.NumTicket} aún no está aceptado. Estado: {ticket.CodEstadoEnvio}");
-        //        }
-
-        //        // 4. Descargar archivo
-        //        var archivoResponse = await _sireComprasService.DescargarArchivoReporteAsync(
-        //                token.AccessToken,
-        //                new DescargarArchivoReporteRequest
-        //                {
-        //                    PerTributario = $"{request.Anio}{request.Mes:D2}",
-        //                    NomArchivoReporte = ticket.NomArchivoReporte,
-        //                    CodTipoArchivoReporte = ticket.CodTipoAchivoReporte,
-        //                    NumTicket = ticket.NumTicket,
-        //                    CodProceso = ticket.CodProceso
-        //                });
-
-        //        // 5. Procesar archivo si fue exitoso
-        //        if (archivoResponse.Success)
-        //        {
-        //            var perTributarioResponse = await _perTributarioService.AddPerTributarioAsync(new AddPerTributarioRequest
-        //            {
-        //                ClienteId = request.ClienteId,
-        //                anio = request.Anio,
-        //                mes = request.Mes,
-        //                TipoComprobante = TipoComprobanteEnum.Compra,
-        //                archivoZip = archivoResponse.Data.Archivo
-        //            });
-
-        //            return StatusCode(perTributarioResponse.StatusCode, perTributarioResponse);
-        //        }
-
-        //        // 6. Manejar error 2244 (ticket inválido/expirado)
-        //        if (EsError2244(archivoResponse.Data))
-        //        {
-        //            var nuevoTicket = await _ticketService.GetOrGenerateActiveTicketAsync(
-        //                token.AccessToken,
-        //                new GetTicketRequest
-        //                {
-        //                    clienteId = request.ClienteId,
-        //                    perTributario = $"{request.Anio}{request.Mes:D2}"
-        //                });
-
-        //            if (nuevoTicket.CodEstadoEnvio != "06")
-        //            {
-        //                return StatusCode(202,
-        //                    $"Nuevo ticket {nuevoTicket.NumTicket} aún no aceptado. Estado: {nuevoTicket.CodEstadoEnvio}");
-        //            }
-
-        //            var archivoResponseRetry = await _sireComprasService.DescargarArchivoReporteAsync(
-        //               token.AccessToken,
-        //               new DescargarArchivoReporteRequest
-        //               {
-        //                   PerTributario = $"{request.Anio}{request.Mes:D2}",
-        //                   NomArchivoReporte = nuevoTicket.NomArchivoReporte,
-        //                   CodTipoArchivoReporte = nuevoTicket.CodTipoAchivoReporte,
-        //                   NumTicket = nuevoTicket.NumTicket,
-        //                   CodProceso = nuevoTicket.CodProceso
-        //               });
-
-        //            if (archivoResponseRetry.Success)
-        //            {
-        //                var perTributarioResponse = await _perTributarioService.AddPerTributarioAsync(new AddPerTributarioRequest
-        //                {
-        //                    ClienteId = request.ClienteId,
-        //                    anio = request.Anio,
-        //                    mes = request.Mes,
-        //                    TipoComprobante = TipoComprobanteEnum.Compra,
-        //                    archivoZip = archivoResponseRetry.Data.Archivo
-        //                });
-
-        //                return StatusCode(perTributarioResponse.StatusCode, perTributarioResponse);
-        //            }
-        //        }
-
-        //        // 7. Error genérico si no se pudo descargar
-        //        var mensajeError = archivoResponse?.Message
-        //            ?? "El archivo no está disponible todavía.";
-        //        return StatusCode(502, mensajeError);
-        //    }
-        //    catch (KeyNotFoundException ex)
-        //    {
-        //        return NotFound(ex.Message);
-        //    }
-        //    catch (ApplicationException ex)
-        //    {
-        //        return StatusCode(502, ex.Message);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, $"Error interno: {ex.Message}");
-        //    }
-        //}
-
-        //private async Task<DescargarArchivoReporteResponse> DescargarArchivoReporteSunat(string accessToken, GetPerTributarioByPeriodoRequest request, TicketResponse ticket)
-        //{
-        //    return await _sireComprasService.DescargarArchivoReporteAsync(
-        //        accessToken,
-        //        new DescargarArchivoReporteRequest
-        //        {
-        //            PerTributario = $"{request.Anio}{request.Mes:D2}",
-        //            NomArchivoReporte = ticket.NomArchivoReporte,
-        //            CodTipoArchivoReporte = ticket.CodTipoAchivoReporte,
-        //            NumTicket = ticket.NumTicket,
-        //            CodProceso = ticket.CodProceso
-        //        });
-        //}
-
-        // 🔹 Método auxiliar para guardar en BD
-        //private async Task<PerTributarioResponse> GuardarPerTributarioAsync(GetPerTributarioByPeriodoRequest request, byte[] archivoZip)
-        //{
-        //    return await _perTributarioService.AddPerTributarioAsync(new AddPerTributarioRequest
-        //    {
-        //        ClienteId = request.ClienteId,
-        //        anio = request.Anio,
-        //        mes = request.Mes,
-        //        TipoComprobante = TipoComprobanteEnum.Compra,
-        //        archivoZip = archivoZip
-        //    });
-        //}
-
-        // 🔹 Método auxiliar para verificar error 2244
-        private static bool EsError2244(DescargarArchivoReporteResponse? archivoResponse)
-        {
-            var errorJson = archivoResponse?.ErrorContent;
-            if (string.IsNullOrEmpty(errorJson)) return false;
-
-            var parsedError = System.Text.Json.JsonSerializer.Deserialize<ArchivoReporteErrorMessage>(errorJson);
-            return parsedError?.errors?.Any(e => e.cod == 2244) == true;
         }
     }
 }

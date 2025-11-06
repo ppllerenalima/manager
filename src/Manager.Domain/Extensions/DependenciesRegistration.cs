@@ -1,9 +1,3 @@
-using FluentValidation.AspNetCore;
-using Manager.Domain.Services;
-using Manager.Domain.Services.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
-
 namespace Manager.Domain.Extensions
 {
     public static class DependenciesRegistration

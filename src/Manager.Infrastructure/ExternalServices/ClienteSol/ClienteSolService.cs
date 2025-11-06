@@ -4,9 +4,9 @@
     {
         private readonly ClientesSolClient _clienteSolClient;
 
-        public ClienteSolService(ClientesSolClient clientesSolClient)
+        public ClienteSolService(ClientesSolClient clienteSolClient)
         {
-            clientesSolClient = clientesSolClient;
+            _clienteSolClient = clienteSolClient ?? throw new ArgumentNullException(nameof(clienteSolClient));
         }
 
         public async Task<BaseResponseGeneric<SunatAuthResponse>> AccessTokenAsync(SunatAuthRequest request, CancellationToken cancellationToken)

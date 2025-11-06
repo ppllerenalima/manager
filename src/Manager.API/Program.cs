@@ -1,11 +1,4 @@
 ﻿#region Configuración de Servicios
-
-using Manager.Domain.Services.Interfaces;
-using Manager.Infrastructure.ExternalServices.Cpe.Client;
-using Manager.Infrastructure.FileAdapters;
-using System.Net.Http.Headers;
-using System.Reflection;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // 🔐 CORS

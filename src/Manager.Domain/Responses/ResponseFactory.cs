@@ -23,25 +23,27 @@
             };
         }
 
-        public static BaseResponse Error(string message, string? errorCode = null, int statusCode = 500)
+        public static BaseResponse Error(string message, string? errorCode = null, int statusCode = 500, string? details = null)
         {
             return new BaseResponse
             {
                 Success = false,
                 Message = message,
                 ErrorCode = errorCode,
-                StatusCode = statusCode
+                StatusCode = statusCode,
+                Details = details
             };
         }
 
-        public static BaseResponseGeneric<T> Error<T>(string message, string? errorCode = null, int statusCode = 500)
+        public static BaseResponseGeneric<T> Error<T>(string message, string? errorCode = null, int statusCode = 500, string? details = null)
         {
             return new BaseResponseGeneric<T>
             {
                 Success = false,
                 Message = message,
                 ErrorCode = errorCode,
-                StatusCode = statusCode
+                StatusCode = statusCode,
+                Details = details
             };
         }
     }
