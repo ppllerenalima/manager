@@ -188,6 +188,7 @@ namespace Manager.Domain.Services
             {
                 string? glosa = string.Empty;
 
+                // 🧩 CASO 1: ZIP con XML
                 if (tipo?.Equals("02") == true)
                 {
                     // 🔹 Caso 1️⃣: ZIP que contiene XML
@@ -209,15 +210,15 @@ namespace Manager.Domain.Services
                             var desc = l.Description ?? string.Empty;
                             return desc.Length > max ? desc.Substring(0, max) + "..." : desc;
                         }));
-
-                        if (string.IsNullOrWhiteSpace(glosa))
-                            glosa = "(A) Sin detalle de ítems (XML).";
                     }
                     catch (Exception ex)
                     {
-                        glosa = $"(A) Error al procesar XML: {ex.Message}";
+                        _logger.LogWarning(ex, "Error procesando XML para {Serie}-{Numero}", existingRecord.Serie, existingRecord.Numero);
+                        glosa = null;
                     }
                 }
+
+                // 🧩 CASO 2: JSON directo (ConsultaCpeConsultaResponse)
                 else if (tipo is null)
                 {
                     // 🔹 Caso 2️⃣: ZIP que contiene JSON (ConsultaCpeConsultaResponse)
@@ -248,16 +249,16 @@ namespace Manager.Domain.Services
                                 var desc = i.DesItem ?? string.Empty;
                                 return desc.Length > max ? desc.Substring(0, max) + "..." : desc;
                             }));
-
-                            if (string.IsNullOrWhiteSpace(glosa))
-                                glosa = "(B) Sin detalle de ítems (JSON).";
                         }
                     }
                     catch (Exception ex)
                     {
-                        glosa = $"(B) Error al procesar JSON: {ex.Message}";
+                        _logger.LogWarning(ex, "Error procesando JSON para {Serie}-{Numero}", existingRecord.Serie, existingRecord.Numero);
+                        glosa = null;
                     }
                 }
+
+                // 🧩 CASO 3: ZIP con PDF
                 else if (tipo?.Equals("01") == true)
                 {
                     try
@@ -317,46 +318,53 @@ namespace Manager.Domain.Services
                             return desc;
                         }));
 
-                        if (string.IsNullOrWhiteSpace(glosa))
-                            glosa = "(C) Sin detalle de ítems (PDF).";
+                        glosa = $"(PDF) {glosa}";
                     }
                     catch (Exception ex)
                     {
-                        glosa = $"(C) Error al procesar PDF: {ex.Message}";
+                        _logger.LogWarning(ex, "Error procesando PDF para {Serie}-{Numero}", existingRecord.Serie, existingRecord.Numero);
+                        glosa = null;
                     }
                 }
-             
 
-                // 4️⃣ Guardar en BD
+                // 🔹 Validar que haya resultado
+                if (string.IsNullOrWhiteSpace(glosa))
+                {
+                    return ResponseFactory.Error<Comprobante_GlosaResponse>(
+                        "No se pudo generar la glosa a partir del archivo proporcionado.",
+                        "GLOSA_NOT_GENERATED",
+                        422 // Unprocessable Entity: la solicitud fue válida, pero no se pudo procesar el contenido
+                    );
+                }
+
+                // 🔹 Guardar en BD
                 existingRecord.Glosa = glosa;
                 existingRecord.TieneGlosa = true;
 
                 await _comprobanteRepository.UpdateAsync(existingRecord);
                 await _comprobanteRepository.UnitOfWork.SaveChangesAsync();
 
-                // 5️⃣ Construir respuesta exitosa
-                response.Success = true;
-                response.Message = "Glosa procesada correctamente.";
-                response.StatusCode = 200;
-                response.Data = new Comprobante_GlosaResponse
+                // 🔹 Construir respuesta exitosa
+                response = ResponseFactory.Success(new Comprobante_GlosaResponse
                 {
                     Id = existingRecord.Id,
                     Serie = existingRecord.Serie,
                     Numero = existingRecord.Numero,
                     Glosa = glosa,
                     NombreArchivo = $"{existingRecord.NumeroDocIdentidad}-{existingRecord.TipoComprobante}-{existingRecord.Serie}-{existingRecord.Numero}"
-                };
+                },
+                "Glosa procesada correctamente.",
+                200);
             }
             catch (Exception ex)
             {
-                // 🛑 Capturamos cualquier error
-                response.Success = false;
-                response.Message = $"Error al procesar glosa: {ex.Message}";
-                response.ErrorCode = "GLOSA_PROCESS_ERROR";
-                response.StatusCode = 500;
-                response.Data = null;
-
-                _logger.LogError(ex, "Error procesando comprobante {Serie}-{Numero}", existingRecord.Serie, existingRecord.Numero);
+                _logger.LogError(ex, "Error procesando glosa para {Serie}-{Numero}", existingRecord.Serie, existingRecord.Numero);
+                
+                response = ResponseFactory.Error<Comprobante_GlosaResponse>(
+                    $"Error inesperado al procesar la glosa: {ex.Message}",
+                    "GLOSA_PROCESS_EXCEPTION",
+                    500
+                );
             }
 
             return response;
