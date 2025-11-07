@@ -66,8 +66,8 @@ namespace Manager.Domain.Responses.CpeResponses
         [JsonProperty("informacionItems")]
         public List<InformacionItemCpe> InformacionItems { get; set; } = new();
 
-        [JsonProperty("procedenciaMasiva")]
-        public ProcedenciaMasivaCpe ProcedenciaMasiva { get; set; } = new();
+        [JsonProperty("procedenciaIndivual")]
+        public ProcedenciaMasivaCpe ProcedenciaIndivual { get; set; } = new();
     }
 
     public class DatosEmisorCpe
@@ -109,7 +109,7 @@ namespace Manager.Domain.Responses.CpeResponses
     public class InformacionItemCpe
     {
         [JsonProperty("cntItems")]
-        public int CntItems { get; set; }
+        public decimal CntItems { get; set; }
 
         [JsonProperty("codUnidadMedida")]
         public string CodUnidadMedida { get; set; }

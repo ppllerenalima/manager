@@ -35,6 +35,22 @@
             using var reader = new StreamReader(stream, Encoding.UTF8);
             return reader.ReadToEnd();
         }
+
+        // 🔹 Extrae el contenido de un archivo .pdf dentro del ZIP
+        public byte[] ExtractPdfFromZip(byte[] zipBytes)
+        {
+            using var memoryStream = new MemoryStream(zipBytes);
+            using var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
+
+            var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
+            if (entry == null)
+                throw new FileNotFoundException("No se encontró ningún archivo PDF dentro del ZIP.");
+
+            using var pdfStream = entry.Open();
+            using var ms = new MemoryStream();
+            pdfStream.CopyTo(ms);
+            return ms.ToArray();
+        }
     }
 
 }

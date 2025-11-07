@@ -4,5 +4,6 @@
     {
         string ExtractXmlFromZip(byte[] zipFile);
         string ExtractJsonFromZip(byte[] zipBytes);
+        byte[] ExtractPdfFromZip(byte[] zipBytes);
     }
 }

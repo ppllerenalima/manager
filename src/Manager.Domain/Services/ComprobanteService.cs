@@ -1,10 +1,13 @@
-﻿namespace Manager.Domain.Services
+﻿using System.Text.RegularExpressions;
+
+namespace Manager.Domain.Services
 {
     public class ComprobanteService : IComprobanteService
     {
         private readonly IMapper _comprobanteMapper;
         private readonly IComprobanteRepository _comprobanteRepository;
         private readonly IZipReader _zipReader;
+        private readonly IPdfReader _pdfReader;
         private readonly IXmlInvoiceParserService _xmlInvoiceParserService;
 
         private readonly ICpeService _cpeService;
@@ -13,10 +16,12 @@
 
         private readonly ILogger<ComprobanteService> _logger;
 
-        public ComprobanteService(IComprobanteRepository comprobanteRepository, IZipReader zipReader, IXmlInvoiceParserService xmlInvoiceParserService, ICpeService cpeService, IConfiguracionGlobalService configuracionGlobalService, IMapper comprobanteMapper, ILogger<ComprobanteService> logger)
+        public ComprobanteService(IComprobanteRepository comprobanteRepository, IZipReader zipReader, IPdfReader pdfReader, IXmlInvoiceParserService xmlInvoiceParserService, ICpeService cpeService, IConfiguracionGlobalService configuracionGlobalService, IMapper comprobanteMapper, ILogger<ComprobanteService> logger)
         {
             _comprobanteRepository = comprobanteRepository;
             _zipReader = zipReader;
+            _pdfReader = pdfReader;
+
             _xmlInvoiceParserService = xmlInvoiceParserService;
             _cpeService = cpeService;
             _configuracionGlobalService = configuracionGlobalService;
@@ -181,7 +186,7 @@
 
             try
             {
-                string glosa = string.Empty;
+                string? glosa = string.Empty;
 
                 if (tipo?.Equals("02") == true)
                 {
@@ -206,11 +211,11 @@
                         }));
 
                         if (string.IsNullOrWhiteSpace(glosa))
-                            glosa = "Sin detalle de ítems (XML).";
+                            glosa = "(A) Sin detalle de ítems (XML).";
                     }
                     catch (Exception ex)
                     {
-                        glosa = $"Error al procesar XML: {ex.Message}";
+                        glosa = $"(A) Error al procesar XML: {ex.Message}";
                     }
                 }
                 else if (tipo is null)
@@ -219,14 +224,14 @@
                     try
                     {
                         // 1️⃣ Leer JSON del ZIP
-                        var jsonContent = _zipReader.ExtractJsonFromZip(zipFile);
+                        var jsonContent = System.Text.Encoding.UTF8.GetString(zipFile);
 
                         // 2️⃣ Deserializar al modelo ConsultaCpeConsultaResponse
                         var consultaResponse = JsonConvert.DeserializeObject<ConsultaCpeConsultaResponse>(jsonContent);
 
                         if (consultaResponse?.Comprobantes == null || !consultaResponse.Comprobantes.Any())
                         {
-                            glosa = "Sin información de comprobantes en el JSON.";
+                            glosa = "(B) Sin información de comprobantes en el JSON.";
                         }
                         else
                         {
@@ -245,19 +250,82 @@
                             }));
 
                             if (string.IsNullOrWhiteSpace(glosa))
-                                glosa = "Sin detalle de ítems (JSON).";
+                                glosa = "(B) Sin detalle de ítems (JSON).";
                         }
                     }
                     catch (Exception ex)
                     {
-                        glosa = $"Error al procesar JSON: {ex.Message}";
+                        glosa = $"(B) Error al procesar JSON: {ex.Message}";
                     }
                 }
-                else
+                else if (tipo?.Equals("01") == true)
                 {
-                    glosa = "Tipo de archivo no reconocido para generar glosa.";
-                }
+                    try
+                    {
+                        // 1️⃣ Extraer PDF del ZIP
+                        var pdfBytes = _zipReader.ExtractPdfFromZip(zipFile);
 
+                        // 2️⃣ Extraer texto
+                        var pdfText = _pdfReader.ExtractTextFromPdf(pdfBytes);
+
+                        // 3️⃣ Obtener configuración
+                        var config = await _configuracionGlobalService.GetConfiguracionGlobalFirstOrDefaultAsync();
+                        var max = config.MaxCaracteresGlosa > 0 ? config.MaxCaracteresGlosa : 100;
+
+                        // 4️⃣ Buscar la sección de descripción de ítems
+                        // Muchos PDFs SUNAT incluyen la palabra "DescripciónCantidadUnidad"
+                        // así que cortamos desde allí hasta "SON:" (total en letras)
+                        string descripcionSection = string.Empty;
+
+                        var startIdx = pdfText.IndexOf("Descripción", StringComparison.OrdinalIgnoreCase);
+                        var endIdx = pdfText.IndexOf("SON:", StringComparison.OrdinalIgnoreCase);
+
+                        if (startIdx >= 0 && endIdx > startIdx)
+                            descripcionSection = pdfText.Substring(startIdx, endIdx - startIdx);
+                        else
+                            descripcionSection = pdfText; // fallback: texto completo
+
+                        // 5️⃣ Limpiar texto y extraer posibles ítems
+                        descripcionSection = descripcionSection
+                            .Replace("DescripciónCantidadUnidad MedidaICBPERCódigoValor Unitario", " ")
+                            .Replace("DescripciónCantidadUnidadMedidaICBPERCódigoValor Unitario", " ")
+                            .Replace("Unidad", " ")
+                            .Replace("UNIDAD", " ")
+                            .Replace("S/", " ")
+                            .Replace("SOL", " ")
+                            .Replace("SOLES", " ")
+                            .Replace(":", " ")
+                            .Replace("\r", " ")
+                            .Replace("\n", " ")
+                            .Replace("  ", " ");
+
+                        // 6️⃣ Detectar frases que parezcan descripciones de producto
+                        // Por ejemplo: “ALQUILER DE MAQUNARIA ORUGA,EL COSTO DE HORA MAQUINA ES DE...”
+                        var matches = Regex.Matches(descripcionSection, @"([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ,\.-]{10,})");
+
+                        var descripciones = matches
+                            .Select(m => m.Value.Trim())
+                            .Where(x => x.Length > 5 && !x.StartsWith("Descripción", StringComparison.OrdinalIgnoreCase))
+                            .Distinct()
+                            .Take(5)
+                            .ToList();
+
+                        // 7️⃣ Construir glosa
+                        glosa = string.Join("; ", descripciones.Select(d =>
+                        {
+                            var desc = d.Length > max ? d.Substring(0, max) + "..." : d;
+                            return desc;
+                        }));
+
+                        if (string.IsNullOrWhiteSpace(glosa))
+                            glosa = "(C) Sin detalle de ítems (PDF).";
+                    }
+                    catch (Exception ex)
+                    {
+                        glosa = $"(C) Error al procesar PDF: {ex.Message}";
+                    }
+                }
+             
 
                 // 4️⃣ Guardar en BD
                 existingRecord.Glosa = glosa;

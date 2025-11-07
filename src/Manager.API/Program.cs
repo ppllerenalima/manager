@@ -29,6 +29,7 @@ builder.Services
 
     .AddScoped<IZipFileParser, ZipFileParser>()
     .AddScoped<IZipReader, ZipReader>()
+    .AddScoped<IPdfReader, PdfReader>()
 
     // MAPEADORES Y LÓGICA DE NEGOCIO
     .AddMappers()

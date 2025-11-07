@@ -55,12 +55,28 @@
                 if (consultaJson.Success && consultaJson.Data != null)
                     return consultaJson;
 
+                // 🔹 2️⃣ Intentar con ConsultaCpe (ZIP + PDF)
+                var requesPdf = new DescargarZipRequest
+                {
+                    RucEmisor = request.RucEmisor,
+                    TipoComprobante = request.TipoComprobante,
+                    Serie = request.Serie,
+                    Numero = request.Numero,
+                    EsVenta = false,
+                    Tipo = "01" // ZIP con PDF
+                };
+
+                var consultaPdf = await _consultaClient.DescargarAsync(token, requesPdf, cancellationToken);
+                if (consultaPdf.Success && consultaPdf.Data != null)
+                    return consultaPdf;
+
                 // 🔹 4️⃣ Si todos fallan
                 var mensajeError =
                     "No se pudo descargar el archivo desde ninguno de los servicios disponibles.\n\n" +
                     $"🔸 ControlCpe ZIP+XML: {control.Message} (Status {control.StatusCode})\n" +
                     $"🔸 ConsultaCpe ZIP+XML: {consultaXml.Message} (Status {consultaXml.StatusCode})\n" +
-                    $"🔸 ConsultaCpe JSON: {consultaJson.Message} (Status {consultaJson.StatusCode})";
+                    $"🔸 ConsultaCpe JSON: {consultaJson.Message} (Status {consultaJson.StatusCode})\n" +
+                    $"🔸 ConsultaCpe PDF: {consultaPdf.Message} (Status {consultaPdf.StatusCode})";
 
                 return ResponseFactory.Error<DescargarZipResponse>(
                     mensajeError,
