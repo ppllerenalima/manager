@@ -23,22 +23,6 @@
             _logger = logger;
         }
 
-        //[HttpGet("{Id:Guid}/token")]
-        //public async Task<IActionResult> GetToken(Guid Id)
-        //{
-        //    var cliente = await _clienteSunatService.GetClienteAsync(new GetClienteRequest { Id = Id });
-
-        //    var token = await _sireComprasService.AccessTokenAsync(new SunatAuthRequest
-        //    {
-        //        ClientId = cliente.ClientId,
-        //        ClientSecret = cliente.ClientSecret,
-        //        Username = $"{cliente.Ruc}{cliente.Username}",
-        //        Password = cliente.Password
-        //    });
-
-        //    return Ok(token);
-        //}
-
         [HttpPost("descargar-propuesta")]
         public async Task<IActionResult> DescargarPropuesta([FromBody] DescargarPropuestaRequest request)
         {
@@ -53,7 +37,6 @@
             var resultado = await _sireComprasService.ConsultarEstadoTicketAsync(request);
             return Ok(resultado); // para devolverlo como JSON
         }
-
 
         /// <summary>
         /// Importa los comprobantes desde SUNAT para un periodo tributario determinado.
@@ -97,7 +80,7 @@
                 });
 
                 if (!archivoResponse.Success || archivoResponse.Data?.Archivo == null)
-                    return StatusCode(archivoResponse.StatusCode, $"{archivoResponse.Message} - {archivoResponse.Details}");
+                    return StatusCode(archivoResponse.StatusCode, archivoResponse.Message);
 
                 // 🧩 Paso 4: Registrar periodo y comprobantes
                 var perTributarioResponse = await _perTributarioService.AddPerTributarioAsync(new AddPerTributarioRequest
@@ -109,7 +92,7 @@
                     archivoZip = archivoResponse.Data.Archivo
                 });
 
-                return StatusCode(perTributarioResponse.StatusCode, perTributarioResponse);
+                return StatusCode(perTributarioResponse.StatusCode, perTributarioResponse.Message);
             }
             catch (KeyNotFoundException ex)
             {

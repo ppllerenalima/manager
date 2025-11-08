@@ -46,18 +46,18 @@
             });
 
             if (!authResponse.Success)
-                return StatusCode(502, "Error al obtener token desde SUNAT.");
+                return StatusCode(502, authResponse);
 
             // 4. Calcula fechas
             DateTime ahora = DateTime.UtcNow;
-            DateTime expiracion = ahora.AddSeconds(authResponse.Data.ExpiresIn);
+            DateTime expiracion = ahora.AddSeconds(authResponse.Data.Expires_in);
 
             // 5. Guarda el token (nuevo o actualización)
             if (tokenBD == null)
             {
                 await _tokenService.AddTokenAsync(new AddTokenRequest
                 {
-                    AccessToken = authResponse.Data.AccessToken,
+                    AccessToken = authResponse.Data.Access_token,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
 
@@ -70,7 +70,7 @@
                 {
                     Id = tokenBD.Id,
 
-                    AccessToken = authResponse.Data.AccessToken,
+                    AccessToken = authResponse.Data.Access_token,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
 
@@ -79,7 +79,7 @@
             }
 
             // 6. Devuelve token actualizado
-            return Ok(new { accessToken = authResponse.Data.AccessToken });
+            return Ok(new { accessToken = authResponse.Data.Access_token });
         }
 
     }

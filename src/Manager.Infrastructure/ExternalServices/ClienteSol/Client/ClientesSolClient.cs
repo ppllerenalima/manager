@@ -48,26 +48,16 @@
                 {
                     try
                     {
-                        using var jsonDoc = JsonDocument.Parse(json);
-                        var root = jsonDoc.RootElement;
-
-                        var result = new SunatAuthResponse
-                        {
-                            AccessToken = root.GetProperty("access_token").GetString(),
-                            TokenType = root.GetProperty("token_type").GetString(),
-                            ExpiresIn = root.GetProperty("expires_in").GetInt32(),
-                            StatusCode = statusCode,
-                            EsExito = true
-                        };
-
-                        return ResponseFactory.Success(result, "Token obtenido correctamente.", statusCode);
+                        var result = JsonConvert.DeserializeObject<SunatAuthResponse>(json);
+                        return ResponseFactory.Success(result!, "Token obtenido correctamente.", statusCode);
                     }
-                    catch (System.Text.Json.JsonException ex)
+                    catch (Newtonsoft.Json.JsonException ex)
                     {
                         return ResponseFactory.Error<SunatAuthResponse>(
-                            $"Error al deserializar la respuesta de autenticación: {ex.Message}",
+                            "Error al deserializar la respuesta de autenticación.",
                             "DESERIALIZATION_ERROR",
-                            statusCode
+                            statusCode,
+                            ex.Message
                         );
                     }
                 }
@@ -75,57 +65,44 @@
                 // 5️⃣ Manejar errores HTTP
                 try
                 {
-                    using var jsonDoc = JsonDocument.Parse(json);
-                    var root = jsonDoc.RootElement;
-
-                    var error = new ErrorDetail
-                    {
-                        Cod = root.TryGetProperty("error", out var codeProp) ? codeProp.GetString() ?? "UNKNOWN" : "UNKNOWN",
-                        Msg = root.TryGetProperty("error_description", out var msgProp)
-                            ? msgProp.GetString() ?? "Error desconocido al autenticar con SUNAT."
-                            : "Error desconocido al autenticar con SUNAT."
-                    };
-
-                    var errorResult = new SunatAuthResponse
-                    {
-                        EsExito = false,
-                        StatusCode = statusCode,
-                        Errores = new List<ErrorDetail> { error }
-                    };
-
-                    return ResponseFactory.Error<SunatAuthResponse>(error.Msg, error.Cod, statusCode);
+                    var error = JsonConvert.DeserializeObject<ErrorAuthResponse>(json);
+                    return ResponseFactory.Error<SunatAuthResponse>(error?.error_description ?? "Error desconocido al autenticar con SUNAT.", error?.error ?? "UNKNOWN", statusCode);
                 }
-                catch
+                catch (Newtonsoft.Json.JsonException ex)
                 {
                     return ResponseFactory.Error<SunatAuthResponse>(
                         $"Error {statusCode}: no se pudo interpretar la respuesta de SUNAT.",
                         "INVALID_RESPONSE_FORMAT",
-                        statusCode
+                        statusCode,
+                        ex.Message
                     );
                 }
             }
             catch (HttpRequestException ex)
             {
                 return ResponseFactory.Error<SunatAuthResponse>(
-                    $"Error de red al comunicarse con SUNAT: {ex.Message}",
+                    "Error de red al comunicarse con SUNAT.",
                     "HTTP_REQUEST_EXCEPTION",
-                    500
+                    500,
+                    ex.Message
                 );
             }
             catch (TaskCanceledException ex)
             {
                 return ResponseFactory.Error<SunatAuthResponse>(
-                    $"Timeout en la autenticación con SUNAT: {ex.Message}",
+                    "Timeout en la autenticación con SUNAT.",
                     "TIMEOUT_EXCEPTION",
-                    504
+                    504,
+                    ex.Message
                 );
             }
             catch (Exception ex)
             {
                 return ResponseFactory.Error<SunatAuthResponse>(
-                    $"Excepción no controlada: {ex.Message}",
+                    "Excepción no controlada.",
                     "GENERAL_EXCEPTION",
-                    500
+                    500,
+                    ex.Message
                 );
             }
         }

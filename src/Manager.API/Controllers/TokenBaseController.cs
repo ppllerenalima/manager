@@ -52,14 +52,14 @@ namespace Manager.API.Controllers
 
             // 4. Calcula fechas
             DateTime ahora = DateTime.UtcNow;
-            DateTime expiracion = ahora.AddSeconds(authResponse.Data.ExpiresIn);
+            DateTime expiracion = ahora.AddSeconds(authResponse.Data.Expires_in);
 
             // 5. Guarda el tokenBase (nuevo o actualización)
             if (tokenBaseBD == null)
             {
                 await _tokenBaseService.AddTokenBaseAsync(new AddTokenBaseRequest
                 {
-                    AccessToken = authResponse.Data.AccessToken,
+                    AccessToken = authResponse.Data.Access_token,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
 
@@ -72,7 +72,7 @@ namespace Manager.API.Controllers
                 {
                     Id = tokenBaseBD.Id,
 
-                    AccessToken = authResponse.Data.AccessToken,
+                    AccessToken = authResponse.Data.Access_token,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
 
@@ -81,7 +81,7 @@ namespace Manager.API.Controllers
             }
 
             // 6. Devuelve tokenBase actualizado
-            return Ok(new { accessTokenBase = authResponse.Data.AccessToken });
+            return Ok(new { accessTokenBase = authResponse.Data.Access_token });
         }
     }
 }

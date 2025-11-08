@@ -109,10 +109,10 @@ namespace Manager.Domain.Services
                     Password = cliente.Password
                 }, cancellationToken);
 
-                if (!authResponse.Success || authResponse.Data == null || string.IsNullOrWhiteSpace(authResponse.Data.AccessToken))
+                if (!authResponse.Success || authResponse.Data == null || string.IsNullOrWhiteSpace(authResponse.Data.Access_token))
                 {
                     response.Success = false;
-                    response.Message = authResponse.Message ?? "Error al obtener token desde SUNAT.";
+                    response.Message = authResponse.Message;
                     response.ErrorCode = "SUNAT_ERROR";
                     response.StatusCode = authResponse.StatusCode;
                     response.Data = null;
@@ -121,13 +121,13 @@ namespace Manager.Domain.Services
 
                 // 5️⃣ Guardar o actualizar token en BD
                 var ahora = DateTime.UtcNow;
-                var expiracion = ahora.AddSeconds(authResponse.Data.ExpiresIn);
+                var expiracion = ahora.AddSeconds(authResponse.Data.Expires_in);
 
                 if (tokenBD == null)
                 {
                     tokenBD = await AddTokenAsync(new AddTokenRequest
                     {
-                        AccessToken = authResponse.Data.AccessToken,
+                        AccessToken = authResponse.Data.Access_token,
                         FechaGeneracion = ahora,
                         FechaExpiracion = expiracion,
                         ClienteId = cliente.Id
@@ -138,7 +138,7 @@ namespace Manager.Domain.Services
                     tokenBD = await EditTokenAsync(new EditTokenRequest
                     {
                         Id = tokenBD.Id,
-                        AccessToken = authResponse.Data.AccessToken,
+                        AccessToken = authResponse.Data.Access_token,
                         FechaGeneracion = ahora,
                         FechaExpiracion = expiracion,
                         ClienteId = cliente.Id

@@ -100,13 +100,13 @@ namespace Manager.Domain.Services
 
             // 5. Guardar token en BD
             var ahora = DateTime.UtcNow;
-            var expiracion = ahora.AddSeconds(authResponse.Data.ExpiresIn);
+            var expiracion = ahora.AddSeconds(authResponse.Data.Expires_in);
 
             if (tokenBD == null)
             {
                 tokenBD = await AddTokenBaseAsync(new AddTokenBaseRequest
                 {
-                    AccessToken = authResponse.Data.AccessToken,
+                    AccessToken = authResponse.Data.Access_token,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
                     CuentaBaseSolId = cuentaBaseSol.Id,
@@ -117,7 +117,7 @@ namespace Manager.Domain.Services
                 tokenBD = await EditTokenBaseAsync(new EditTokenBaseRequest
                 {
                     Id = tokenBD.Id,
-                    AccessToken = authResponse.Data.AccessToken,
+                    AccessToken = authResponse.Data.Access_token,
                     FechaGeneracion = ahora,
                     FechaExpiracion = expiracion,
                     CuentaBaseSolId = cuentaBaseSolId
