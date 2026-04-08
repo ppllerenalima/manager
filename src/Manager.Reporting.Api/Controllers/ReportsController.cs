@@ -10,22 +10,30 @@ namespace Manager.Reporting.Api.Controllers
     public class ReportsController : ControllerBase
     {
         private readonly ReportExecutionServiceSoapClient _client;
+        private readonly IConfiguration _configuration;
 
-        public ReportsController()
+        public ReportsController(IConfiguration configuration)
         {
+            _configuration = configuration;
+
+            // Leer la URL desde appsettings
+            string reportUrl = _configuration["ReportingSettings:Url"];
+
             var binding = new BasicHttpBinding(BasicHttpSecurityMode.TransportCredentialOnly)
             {
                 Security = { Transport = { ClientCredentialType = HttpClientCredentialType.Ntlm } },
                 MaxReceivedMessageSize = 50_000_000
             };
 
-            var endpoint = new EndpointAddress("http://192.168.1.254/ReportServer/ReportExecution2005.asmx");
+            var endpoint = new EndpointAddress($"{reportUrl}/ReportServer/ReportExecution2005.asmx");
 
             _client = new ReportExecutionServiceSoapClient(binding, endpoint);
 
-            // Credenciales NTLM (Windows)
+            // Opcional: También puedes jalar las credenciales desde el JSON
             _client.ClientCredentials.Windows.ClientCredential = new NetworkCredential(
-                "Administrador", "Aa1234*", "server01"
+                _configuration["ReportingSettings:User"],
+                _configuration["ReportingSettings:Password"],
+                _configuration["ReportingSettings:Domain"]
             );
         }
 
@@ -46,11 +54,12 @@ namespace Manager.Reporting.Api.Controllers
                 {
                     new DataSourceCredentials
                     {
-                        DataSourceName = "dsServer01",
-                        UserName = "sa",
-                        Password = "P@ssw0rd"
+                        DataSourceName = _configuration["ReportingSettings:DataSource:Name"],
+                        UserName = _configuration["ReportingSettings:DataSource:User"],
+                        Password = _configuration["ReportingSettings:DataSource:Password"]
                     }
                 };
+                
                 await _client.SetExecutionCredentialsAsync(new ExecutionHeader { ExecutionID = execId }, null, credentials);
 
                 var parameters = new[]
