@@ -443,6 +443,95 @@ namespace Manager.API.Migrations
                     b.ToTable("Roles", "manager");
                 });
 
+            modelBuilder.Entity("Manager.Domain.Entities.SujetoSinCapacidadOperativa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DocumentoRepresentanteLegal")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("DomicilioFiscal")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("FechaActualizacionSistema")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly?>("FechaEmisionResolucion")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("FechaFirmezaResolucion")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("FechaPublicacion")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsInactive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NombreRepresentanteLegal")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("NumeroResolucion")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("RazonSocial")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Ruc")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(11)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Ruc");
+
+                    b.HasIndex("Ruc", "NumeroResolucion")
+                        .IsUnique();
+
+                    b.ToTable("SujetoSinCapacidadOperativas", "manager");
+                });
+
+            modelBuilder.Entity("Manager.Domain.Entities.SunatPadronHistorial", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("FechaEjecucion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsInactive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NombrePadron")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("RegistrosProcesados")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TextoFechaSunat")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SunatPadronHistorials", "manager");
+                });
+
             modelBuilder.Entity("Manager.Domain.Entities.Ticket", b =>
                 {
                     b.Property<Guid>("Id")

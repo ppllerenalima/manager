@@ -28,6 +28,10 @@
         public DbSet<User> Users { get; set; }
         //public DbSet<UserRole> UserRoles { get; set; }
 
+        public DbSet<SujetoSinCapacidadOperativa> SujetoSinCapacidadOperativas { get; set; }
+        public DbSet<SunatPadronHistorial> SunatPadronHistorials { get; set; }
+
+
         public ManagerContext(DbContextOptions<ManagerContext> options) : base(options)
         {
         }

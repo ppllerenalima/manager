@@ -1,4 +1,7 @@
 ﻿#region Configuración de Servicios
+using Manager.API.BackgroundJobs;
+using Manager.Infrastructure.ExternalServices.Sunat;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 🔐 CORS
@@ -27,6 +30,8 @@ builder.Services
     .AddScoped<ITokenRepository, TokenRepository>()
     .AddScoped<IUserRepository, UserRepository>()
 
+    .AddScoped<ISunatSscoRepository, SunatSscoRepository>()
+
     .AddScoped<IZipFileParser, ZipFileParser>()
     .AddScoped<IZipReader, ZipReader>()
     .AddScoped<IPdfReader, PdfReader>()
@@ -41,6 +46,15 @@ builder.Services.AddTransient<UserDataSeeder>();
 
 // 🔹 HttpClient para SUNAT (se agrega fuera del chain principal)
 builder.Services.AddExternalHttpClients(builder.Configuration);
+
+// 🔹 Cliente HTTP y Worker automático para Padrón SSCO de SUNAT
+builder.Services.AddHttpClient<ISunatSscoService, SunatSscoScraperService>(client =>
+{
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+    client.Timeout = TimeSpan.FromMinutes(2);
+});
+
+builder.Services.AddHostedService<SunatSscoWorker>();
 
 // 🔹 Controladores y JSON
 builder.Services

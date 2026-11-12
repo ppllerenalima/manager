@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace Manager.API.Extensions
 {
@@ -15,6 +15,7 @@ namespace Manager.API.Extensions
                         sqlOptions =>
                         {
                             sqlOptions.MigrationsAssembly(Assembly.GetExecutingAssembly().GetName().Name);
+                            sqlOptions.UseCompatibilityLevel(120); // 👈 Compatibilidad para SQL Server 2014 y 2016+
                         });
                 });
         }
